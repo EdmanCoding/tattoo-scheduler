@@ -27,9 +27,15 @@ public class Artist {
     @NotBlank
     private String password;
 
-    @Column(updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column (updatable = false, nullable = false)
+    private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "artist")  // Just for navigation!
+    @PrePersist
+    void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    // Just for navigation!
+    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Booking> bookings;
 }

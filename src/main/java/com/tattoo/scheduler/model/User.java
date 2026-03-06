@@ -35,9 +35,15 @@ public class User {
     @NotBlank
     private String password;
 
-    @Column(updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(updatable = false, nullable = false)
+    private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "user")  // Just for navigation!
+    // Just for navigation!
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Booking> bookings;
+
+    @PrePersist
+    void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }

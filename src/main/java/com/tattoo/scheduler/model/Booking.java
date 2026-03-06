@@ -33,6 +33,11 @@ public class Booking {
     private String notes;
     private String imagePath;
 
-    @Column (updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column (updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }
