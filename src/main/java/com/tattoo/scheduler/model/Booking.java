@@ -1,6 +1,7 @@
 package com.tattoo.scheduler.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,9 +23,13 @@ public class Booking {
     private Artist artist;
 
     @Enumerated(EnumType.STRING)
+    @NotBlank
     private SessionType sessionType;
 
+    @NotBlank
     private LocalDateTime startTime;
+
+    @NotBlank
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
@@ -36,8 +41,20 @@ public class Booking {
     @Column (updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
+    @Column (nullable = false)
+    private LocalDateTime updatedAt;
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        // ✅ Logic: Auto-calculate endTime before saving if not set
+        if (this.startTime != null && this.endTime == null && this.sessionType != null) {
+            this.endTime = this.startTime.plusMinutes(this.sessionType.getDurationMinutes());
+        }
+    }
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
