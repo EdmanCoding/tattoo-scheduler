@@ -2,6 +2,7 @@ package com.tattoo.scheduler.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -25,13 +26,16 @@ public class Booking {
     private Artist artist;
 
     @Enumerated(EnumType.STRING)
-    @NotBlank
+    @NotNull(message = "Session type is required")
+    @Column(nullable = false)
     private SessionType sessionType;
 
-    @NotBlank
+    @NotNull(message = "Start time is required")
+    @Column(nullable = false)
     private LocalDateTime startTime;
 
-    @NotBlank
+    @NotNull(message = "End time is required")
+    @Column(nullable = false)
     private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
