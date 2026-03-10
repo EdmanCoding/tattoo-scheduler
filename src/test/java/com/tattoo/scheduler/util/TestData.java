@@ -1,4 +1,4 @@
-package com.tattoo.scheduler;
+package com.tattoo.scheduler.util;
 
 import com.tattoo.scheduler.model.Artist;
 import com.tattoo.scheduler.model.User;

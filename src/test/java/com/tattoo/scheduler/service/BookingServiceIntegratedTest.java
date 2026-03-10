@@ -1,6 +1,6 @@
 package com.tattoo.scheduler.service;
 
-import com.tattoo.scheduler.TestData;
+import com.tattoo.scheduler.util.TestData;
 import com.tattoo.scheduler.model.*;
 import com.tattoo.scheduler.repository.ArtistRepository;
 import com.tattoo.scheduler.repository.BookingRepository;
@@ -233,5 +233,29 @@ public class BookingServiceIntegratedTest {
         assertThatThrownBy(()-> bookingService.createBooking(overlapping))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("already booked");
+    }
+    @Test
+    @DisplayName("Should auto-calculate endTime when not provided (integration)")
+    void autoCalculateEndTimeIntegrationTest() {
+        // Arrange
+        Artist artist = TestData.createTestArtist();
+        artist = artistRepository.save(artist);
+
+        User user = TestData.createTestUser1();
+        user = userRepository.save(user);
+
+        Booking booking = new Booking();
+        booking.setUser(user);
+        booking.setArtist(artist);
+        booking.setSessionType(SessionType.MEDIUM); // 4 hours
+        booking.setStartTime(LocalDateTime.of(2026, 3, 10, 14, 0));
+        // endTime is NOT set
+
+        // Act
+        Booking saved = bookingService.createBooking(booking);
+
+        // Assert
+        assertThat(saved.getEndTime())
+                .isEqualTo(LocalDateTime.of(2026, 3, 10, 18, 0)); // 14:00 + 4h
     }
 }

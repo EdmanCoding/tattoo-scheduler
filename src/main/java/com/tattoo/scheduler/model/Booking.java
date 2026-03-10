@@ -54,10 +54,6 @@ public class Booking {
     void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        // ✅ Logic: Auto-calculate endTime before saving if not set
-        if (this.startTime != null && this.endTime == null && this.sessionType != null) {
-            this.endTime = this.startTime.plusMinutes(this.sessionType.getDurationMinutes());
-        }
     }
     @PreUpdate
     void onUpdate() {
