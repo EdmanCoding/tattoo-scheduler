@@ -28,6 +28,4 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // Helper for calendar view
     List<Booking> findByArtistIdAndStatusNot(Long artistId, BookingStatus status);
-
-
 }
