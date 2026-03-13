@@ -1,10 +1,16 @@
 package com.tattoo.scheduler.service;
 
+import com.tattoo.scheduler.dto.BookingResponse;
+import com.tattoo.scheduler.dto.CreateBookingRequest;
+import com.tattoo.scheduler.service.exception.BookingConflictException;
 import com.tattoo.scheduler.util.TestData;
 import com.tattoo.scheduler.model.*;
 import com.tattoo.scheduler.repository.ArtistRepository;
 import com.tattoo.scheduler.repository.BookingRepository;
 import com.tattoo.scheduler.repository.UserRepository;
+
+import static com.tattoo.scheduler.util.TestRequestFactory.DEFAULT_END_TIME;
+import static com.tattoo.scheduler.util.TestRequestFactory.DEFAULT_START_TIME;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,11 +18,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDateTime;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Sql(scripts = "/test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
 public class BookingServiceIntegratedTest {
     @Autowired private BookingRepository bookingRepository;
     @Autowired private ArtistRepository artistRepository;
@@ -26,236 +34,230 @@ public class BookingServiceIntegratedTest {
     @BeforeEach
     void setUp() {
         // Manually create the service with the real repository
-        bookingService = new BookingService(bookingRepository);
+        bookingService = new BookingService(bookingRepository,userRepository,artistRepository);
     }
 
     @Test
     @DisplayName("Should prevent overlapping bookings for the same artist")
-    void shouldPreventOverlappingBookingsTest() {
-        // Arrange: Create artist, user, and existing booking with time 14:00 - 18:00
-        Artist artist = TestData.createTestArtist();
-        artist = artistRepository.save(artist);
+    void overlappingBookingsTest() {
+        // Arrange
+        // Create and save artist & user using repositories
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user = userRepository.save(TestData.createTestUser1());
 
-        User user = TestData.createTestUser1();
-        user = userRepository.save(user);
-
-        Booking existing = new Booking();
-        existing.setUser(user);
-        existing.setArtist(artist);
-        existing.setSessionType(SessionType.MEDIUM);
-        existing.setStartTime(LocalDateTime.of(2026,3,10,14,0));
-        existing.setEndTime(LocalDateTime.of(2026,3,10,18,0));
+        // Create and save existing booking
+        Booking existing = Booking.builder()
+                .artist(artist)
+                .user(user)
+                .sessionType(SessionType.MEDIUM)
+                .startTime(DEFAULT_START_TIME)
+                .endTime(DEFAULT_END_TIME).build();
         bookingRepository.save(existing);
 
-        // Act and Assert: Try to book 16:00 - 20:00 (overlaps) -> expect exception
-        Booking overlapping = new Booking();
-        overlapping.setUser(user);
-        overlapping.setArtist(artist);
-        overlapping.setSessionType(SessionType.MEDIUM);
-        overlapping.setStartTime(LocalDateTime.of(2026,3,10,16,0));
-        overlapping.setEndTime(LocalDateTime.of(2026,3,10,20,0));
+        // Create overlapping request
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME.plusHours(1), "Overlapping attempt", null);
 
-        assertThatThrownBy(()-> bookingService.createBooking(overlapping))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("already booked");
+        // Act and Assert
+        assertThatThrownBy(() -> bookingService.createBooking(user.getId(), request))
+                .isInstanceOf(BookingConflictException.class)
+                .hasMessageContaining("Cannot book at ");
     }
-    @Test
-    @DisplayName("Should work successfully")
-    void nonOverlappingBookingsTest() {
-        // Arrange: Create artist, user, and existing booking 14:00 - 18:00
-        Artist artist = TestData.createTestArtist();
-        artist = artistRepository.save(artist);
-
-        User user = TestData.createTestUser1();
-        user = userRepository.save(user);
-
-        Booking existing = new Booking();
-        existing.setUser(user);
-        existing.setArtist(artist);
-        existing.setSessionType(SessionType.MEDIUM);
-        existing.setStartTime(LocalDateTime.of(2026,3,10,14,0));
-        existing.setEndTime(LocalDateTime.of(2026,3,10,18,0));
-        bookingRepository.save(existing);
-
-        // Act: Create non-overlapping booking 9:00-13:00
-        Booking nonOverlapping = new Booking();
-        nonOverlapping.setUser(user);
-        nonOverlapping.setArtist(artist);
-        nonOverlapping.setSessionType(SessionType.MEDIUM);
-        nonOverlapping.setStartTime(LocalDateTime.of(2026,3,10,9,0));
-        nonOverlapping.setEndTime(LocalDateTime.of(2026,3,10,13,0));
-
-        Booking saved = bookingService.createBooking(nonOverlapping);
-
-        // Assert
-        assertThat(saved.getId()).isNotNull();                     // ID generated
-        assertThat(saved.getStartTime()).isEqualTo(LocalDateTime.of(2026,3,10,9,0));
-        assertThat(saved.getEndTime()).isEqualTo(LocalDateTime.of(2026,3,10,13,0));
-        assertThat(saved.getUser().getId()).isEqualTo(user.getId());  // references correct user
-        assertThat(saved.getArtist().getId()).isEqualTo(artist.getId());
-
-        assertThat(bookingRepository.count()).isEqualTo(2);
-    }
-    @Test
-    @DisplayName("Should not overlap at an adjacent time")
-    void adjacentBookingsTest() {
-        // Arrange: Create artist, user, and existing booking 10:00 - 14:00
-        Artist artist = TestData.createTestArtist();
-        artist = artistRepository.save(artist);
-
-        User user = TestData.createTestUser1();
-        user = userRepository.save(user);
-
-        Booking existing = new Booking();
-        existing.setUser(user);
-        existing.setArtist(artist);
-        existing.setSessionType(SessionType.MEDIUM);
-        existing.setStartTime(LocalDateTime.of(2026, 3, 10, 10, 0));
-        existing.setEndTime(LocalDateTime.of(2026, 3, 10, 14, 0));
-        bookingRepository.save(existing);
-
-        // Act: Create adjacent booking 14:00-18:00
-        Booking adjacent = new Booking();
-        adjacent.setUser(user);
-        adjacent.setArtist(artist);
-        adjacent.setSessionType(SessionType.MEDIUM);
-        adjacent.setStartTime(LocalDateTime.of(2026,3,10,14,0));
-        adjacent.setEndTime(LocalDateTime.of(2026,3,10,18,0));
-
-        Booking saved = bookingService.createBooking(adjacent);
-
-        // Assert
-        assertThat(saved.getId()).isNotNull();                     // ID generated
-        assertThat(saved.getStartTime()).isEqualTo(LocalDateTime.of(2026,3,10,14,0));
-        assertThat(saved.getEndTime()).isEqualTo(LocalDateTime.of(2026,3,10,18,0));
-        assertThat(saved.getUser().getId()).isEqualTo(user.getId());  // references correct user
-        assertThat(saved.getArtist().getId()).isEqualTo(artist.getId());
-
-        assertThat(bookingRepository.count()).isEqualTo(2);
-    }
-    @Test
     @DisplayName("Should prevent bookings at the same time for the same artist")
     void sameTimeBookingsTest() {
-        // Arrange: Create artist, user, and existing booking with time 14:00 - 18:00
-        Artist artist = TestData.createTestArtist();
-        artist = artistRepository.save(artist);
+        // Arrange
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user = userRepository.save(TestData.createTestUser1());
 
-        User user = TestData.createTestUser1();
-        user = userRepository.save(user);
-
-        Booking existing = new Booking();
-        existing.setUser(user);
-        existing.setArtist(artist);
-        existing.setSessionType(SessionType.MEDIUM);
-        existing.setStartTime(LocalDateTime.of(2026,3,10,14,0));
-        existing.setEndTime(LocalDateTime.of(2026,3,10,18,0));
+        Booking existing = Booking.builder()
+                .artist(artist)
+                .user(user)
+                .sessionType(SessionType.MEDIUM)
+                .startTime(DEFAULT_START_TIME)
+                .endTime(DEFAULT_END_TIME).build();
         bookingRepository.save(existing);
 
-        // Act and Assert: Try to book the same time
-        Booking sameTime = new Booking();
-        sameTime.setUser(user);
-        sameTime.setArtist(artist);
-        sameTime.setSessionType(SessionType.MEDIUM);
-        sameTime.setStartTime(LocalDateTime.of(2026,3,10,14,0));
-        sameTime.setEndTime(LocalDateTime.of(2026,3,10,18,0));
+        // Create overlapping request at the same time
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME, "Overlapping attempt", null);
 
-        assertThatThrownBy(()-> bookingService.createBooking(sameTime))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("already booked");
+        // Act and Assert
+        assertThatThrownBy(() -> bookingService.createBooking(user.getId(), request))
+                .isInstanceOf(BookingConflictException.class)
+                .hasMessageContaining("Cannot book at ");
     }
     @Test
-    @DisplayName("Can be overlapped with cancelled session")
-    void cancelledSessionOverlappingTest() {
-        // Arrange: Create artist, user, and existing cancelled booking 10:00 - 14:00
-        Artist artist = TestData.createTestArtist();
-        artist = artistRepository.save(artist);
+    @DisplayName("Should prevent overlapping with buffer of previous booking for the same artist")
+    void overlappingWithBufferTest() {
+        // Arrange
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user = userRepository.save(TestData.createTestUser1());
 
-        User user = TestData.createTestUser1();
-        user = userRepository.save(user);
-
-        Booking existing = new Booking();
-        existing.setUser(user);
-        existing.setArtist(artist);
-        existing.setSessionType(SessionType.MEDIUM);
-        existing.setStatus(BookingStatus.CANCELLED);
-        existing.setStartTime(LocalDateTime.of(2026, 3, 10, 10, 0));
-        existing.setEndTime(LocalDateTime.of(2026, 3, 10, 14, 0));
+        Booking existing = Booking.builder()
+                .artist(artist)
+                .user(user)
+                .sessionType(SessionType.MEDIUM)    // 2 hours buffer
+                .startTime(DEFAULT_START_TIME)      // 10:00
+                .endTime(DEFAULT_END_TIME).build(); // 14:00
         bookingRepository.save(existing);
 
-        // Act: Create booking at the same time
-        Booking notOverlapping = new Booking();
-        notOverlapping.setUser(user);
-        notOverlapping.setArtist(artist);
-        notOverlapping.setSessionType(SessionType.MEDIUM);
-        notOverlapping.setStartTime(LocalDateTime.of(2026,3,10,10,0));
-        notOverlapping.setEndTime(LocalDateTime.of(2026,3,10,14,0));
+        // Create overlapping with buffer (start at 15:00) request
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME.plusHours(5), "Overlapping with buffer 14:00-16:00", null);
 
-        Booking saved = bookingService.createBooking(notOverlapping);
+        // Act and Assert
+        assertThatThrownBy(() -> bookingService.createBooking(user.getId(), request))
+                .isInstanceOf(BookingConflictException.class)
+                .hasMessageContaining("Cannot book at ");
+    }
+    @Test
+    @DisplayName("Should prevent overlapping with buffer of previous booking " +
+            "for the same artist with different session types")
+    void overlappingWithBufferDifferentSessionsTest() {
+        // Arrange
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user = userRepository.save(TestData.createTestUser1());
 
-        // Assert
-        assertThat(saved.getId()).isNotNull();                     // ID generated
-        assertThat(saved.getStartTime()).isEqualTo(LocalDateTime.of(2026,3,10,10,0));
-        assertThat(saved.getEndTime()).isEqualTo(LocalDateTime.of(2026,3,10,14,0));
-        assertThat(saved.getUser().getId()).isEqualTo(user.getId());  // references correct user
-        assertThat(saved.getArtist().getId()).isEqualTo(artist.getId());
+        Booking existing = Booking.builder()
+                .artist(artist)
+                .user(user)
+                .sessionType(SessionType.SMALL)     // 1 hour buffer
+                .startTime(DEFAULT_START_TIME)      // 10:00
+                .endTime(DEFAULT_START_TIME.plusHours(1)).build(); // 11:00
+        bookingRepository.save(existing);
 
-        assertThat(bookingRepository.count()).isEqualTo(2);
+        // Create overlapping with buffer (start at 11:30) request
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME.plusHours(1).plusMinutes(30),
+                "Overlapping with buffer 11:00-12:00", null);
+
+        // Act and Assert
+        assertThatThrownBy(() -> bookingService.createBooking(user.getId(), request))
+                .isInstanceOf(BookingConflictException.class)
+                .hasMessageContaining("Cannot book at ");
     }
     @Test
     @DisplayName("Overlapping validation should work on bookings from different users")
     void differentUsersOverlappingBookingTest() {
-        // Arrange: Create artist, two users, and existing booking 10:00 - 14:00
-        Artist artist = TestData.createTestArtist();
-        artist = artistRepository.save(artist);
+        // Arrange
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user1 = userRepository.save(TestData.createTestUser1());
+        User user2 = userRepository.save(TestData.createTestUser2());
 
-        User user1 = TestData.createTestUser1();
-        user1 = userRepository.save(user1);
-
-        User user2 = TestData.createTestUser2();
-        user2 = userRepository.save(user2);
-
-        Booking existing = new Booking();
-        existing.setUser(user1);
-        existing.setArtist(artist);
-        existing.setSessionType(SessionType.MEDIUM);
-        existing.setStartTime(LocalDateTime.of(2026,3,10,14,0));
-        existing.setEndTime(LocalDateTime.of(2026,3,10,18,0));
+        Booking existing = Booking.builder()
+                .artist(artist)
+                .user(user1)
+                .sessionType(SessionType.MEDIUM)     // 2 hours buffer
+                .startTime(DEFAULT_START_TIME)      // 10:00
+                .endTime(DEFAULT_END_TIME).build(); // 14:00
         bookingRepository.save(existing);
 
-        // Act and Assert: Try to book 16:00 - 20:00 (overlaps) -> expect exception
-        Booking overlapping = new Booking();
-        overlapping.setUser(user2);
-        overlapping.setArtist(artist);
-        overlapping.setSessionType(SessionType.MEDIUM);
-        overlapping.setStartTime(LocalDateTime.of(2026,3,10,16,0));
-        overlapping.setEndTime(LocalDateTime.of(2026,3,10,20,0));
+        // Create overlapping (11:00-15:00) request
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME.plusHours(1),
+                "Overlapping booking 11:00-15:00", null);
 
-        assertThatThrownBy(()-> bookingService.createBooking(overlapping))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("already booked");
+        // Act and Assert
+        assertThatThrownBy(() -> bookingService.createBooking(user2.getId(), request))
+                .isInstanceOf(BookingConflictException.class)
+                .hasMessageContaining("Cannot book at ");
     }
     @Test
-    @DisplayName("Should auto-calculate endTime when not provided (integration)")
-    void autoCalculateEndTimeIntegrationTest() {
+    @DisplayName("Should allow booking exactly when buffer period ends")
+    void adjacentAfterBufferTest() {
         // Arrange
-        Artist artist = TestData.createTestArtist();
-        artist = artistRepository.save(artist);
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user = userRepository.save(TestData.createTestUser1());
 
-        User user = TestData.createTestUser1();
-        user = userRepository.save(user);
+        Booking existing = Booking.builder()
+                .artist(artist)
+                .user(user)
+                .sessionType(SessionType.MEDIUM)    // 2 hours buffer
+                .startTime(DEFAULT_START_TIME)      // 10:00
+                .endTime(DEFAULT_END_TIME).build(); // 14:00
+        bookingRepository.save(existing);
 
-        Booking booking = new Booking();
-        booking.setUser(user);
-        booking.setArtist(artist);
-        booking.setSessionType(SessionType.MEDIUM); // 4 hours
-        booking.setStartTime(LocalDateTime.of(2026, 3, 10, 14, 0));
-        // endTime is NOT set
-
+        // Try to book exactly when buffer ends (16:00)
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME.plusHours(6), "Adjacent booking", null);
         // Act
-        Booking saved = bookingService.createBooking(booking);
+        BookingResponse response = bookingService.createBooking(user.getId(), request);
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isNotNull();                     // ID generated
+        assertThat(response.startTime()).isEqualTo(DEFAULT_START_TIME.plusHours(6));
+        assertThat(response.endTime()).isEqualTo(DEFAULT_START_TIME.plusHours(10));
+        assertThat(response.userId()).isEqualTo(user.getId());  // references correct user
+        assertThat(response.artistId()).isEqualTo(artist.getId()); // correct artist
+        assertThat(response.sessionType()).isEqualTo(SessionType.MEDIUM);
+        assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
+        assertThat(response.notes()).isEqualTo("Adjacent booking");
+        assertThat(response.imagePath()).isNull();
+        assertThat(response.createdAt()).isNotNull();
+
+        assertThat(bookingRepository.count()).isEqualTo(2);
+    }
+    @Test
+    @DisplayName("Should create booking when no conflicts exist")
+    void happyPathTest() {
+        // Arrange
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user = userRepository.save(TestData.createTestUser1());
+        // No existing bookings
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME, "First booking", null);
+        // Act
+        BookingResponse response = bookingService.createBooking(user.getId(), request);
 
         // Assert
-        assertThat(saved.getEndTime())
-                .isEqualTo(LocalDateTime.of(2026, 3, 10, 18, 0)); // 14:00 + 4h
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isNotNull();                     // ID generated
+        assertThat(response.startTime()).isEqualTo(DEFAULT_START_TIME);
+        assertThat(response.endTime()).isEqualTo(DEFAULT_END_TIME);
+        assertThat(response.userId()).isEqualTo(user.getId());  // references correct user
+        assertThat(response.artistId()).isEqualTo(artist.getId()); // correct artist
+        assertThat(response.sessionType()).isEqualTo(SessionType.MEDIUM);
+        assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
+        assertThat(response.notes()).isEqualTo("First booking");
+        assertThat(response.imagePath()).isNull();
+        assertThat(response.createdAt()).isNotNull();
+
+        assertThat(bookingRepository.count()).isEqualTo(1);
+    }
+    @Test
+    @DisplayName("Can be overlapped with cancelled session")
+    void cancelledSessionOverlappingTest() {
+        // Arrange
+        Artist artist = artistRepository.save(TestData.createTestArtist());
+        User user = userRepository.save(TestData.createTestUser1());
+
+        Booking existing = Booking.builder()
+                .artist(artist)
+                .user(user)
+                .status(BookingStatus.CANCELLED)
+                .sessionType(SessionType.MEDIUM)    // 2 hours buffer
+                .startTime(DEFAULT_START_TIME)      // 10:00
+                .endTime(DEFAULT_END_TIME).build(); // 14:00
+        bookingRepository.save(existing);
+
+        // Try to book exactly the same time (10:00-14:00)
+        CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
+                DEFAULT_START_TIME, "Same time booking", null);
+        // Act
+        BookingResponse response = bookingService.createBooking(user.getId(), request);
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isNotNull();                     // ID generated
+        assertThat(response.startTime()).isEqualTo(DEFAULT_START_TIME);
+        assertThat(response.endTime()).isEqualTo(DEFAULT_END_TIME);
+        assertThat(response.userId()).isEqualTo(user.getId());  // references correct user
+        assertThat(response.artistId()).isEqualTo(artist.getId()); // correct artist
+        assertThat(response.sessionType()).isEqualTo(SessionType.MEDIUM);
+        assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
+        assertThat(response.notes()).isEqualTo("Same time booking");
+        assertThat(response.imagePath()).isNull();
+        assertThat(response.createdAt()).isNotNull();
+
+        assertThat(bookingRepository.count()).isEqualTo(2);
     }
 }
