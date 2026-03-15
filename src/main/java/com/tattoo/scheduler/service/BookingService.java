@@ -2,6 +2,7 @@ package com.tattoo.scheduler.service;
 
 import com.tattoo.scheduler.dto.BookingResponse;
 import com.tattoo.scheduler.dto.CreateBookingRequest;
+import com.tattoo.scheduler.model.Artist;
 import com.tattoo.scheduler.model.Booking;
 import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.model.User;
@@ -12,6 +13,8 @@ import com.tattoo.scheduler.service.exception.BookingConflictException;
 import com.tattoo.scheduler.service.exception.UserNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 public class BookingService {
@@ -25,26 +28,35 @@ public class BookingService {
         this.userRepository = userRepository;
         this.artistRepository = artistRepository;
     }
+
     @Transactional
     public BookingResponse createBooking(Long userId, CreateBookingRequest request) {
-        // 1. Auto-calculate endTime
-        Booking booking = new Booking();
+        // 1. create booking. Auto-calculate endTime and bufferTime
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        booking.setUser(user);
-        booking.setArtist(artistRepository.getReferenceById(1L));
-        booking.setStartTime(request.startTime());
-        booking.setSessionType(request.sessionType());
-        booking.setNotes(request.notes());
-        booking.setImagePath(request.imagePath());
-        booking.setEndTime(request.startTime()
-                .plusMinutes(request.sessionType().getDurationMinutes()));
+
+        Artist artist = artistRepository.getReferenceById(1L);
+
+        LocalDateTime startTime = request.startTime();
+        LocalDateTime endTime = startTime.plusMinutes(request.sessionType().getDurationMinutes());
+        LocalDateTime endOfBufferTime = endTime.plusMinutes(request.sessionType().getBufferAfterMinutes());
+
+        Booking booking = Booking.builder()
+                .user(user)
+                .artist(artist)
+                .sessionType(request.sessionType())
+                .notes(request.notes())
+                .imagePath(request.imagePath())
+                .startTime(request.startTime())
+                .endTime(endTime)
+                .endOfBufferTime(endOfBufferTime)
+                .build();
 
         // 2. Check for overlapping bookings taking into account buffer time (DB-level query)
         boolean conflict = bookingRepository.hasOverlap(
                 booking.getArtist().getId(),
                 booking.getStartTime(),
-                booking.getEndTime().plusMinutes(request.sessionType().getBufferAfterMinutes()),
+                booking.getEndOfBufferTime(),
                 BookingStatus.CANCELLED
         );
         if (conflict) {

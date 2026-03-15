@@ -42,7 +42,7 @@ public class User {
     private LocalDateTime createdAt;
 
     // Just for navigation!
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<Booking> bookings;
 
     @PrePersist

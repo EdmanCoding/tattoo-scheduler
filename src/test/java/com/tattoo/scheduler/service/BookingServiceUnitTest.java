@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static com.tattoo.scheduler.util.TestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,9 +43,6 @@ public class BookingServiceUnitTest {
     private BookingService bookingService;
 
     // === Constants ===
-    private static final Long TEST_USER_ID = 1L;
-    private static final Long TEST_ARTIST_ID = 1L;
-    private static final Long TEST_NONEXISTING_USER_ID = 658L;
     private static final LocalDateTime TEST_START_TIME = LocalDateTime.of(2026, 4, 10, 10, 0);
 
     // === Captors ===
@@ -53,14 +51,14 @@ public class BookingServiceUnitTest {
     @Captor
     private ArgumentCaptor<LocalDateTime> startTimeCaptor;
     @Captor
-    private ArgumentCaptor<LocalDateTime> endTimeCaptor;
+    private ArgumentCaptor<LocalDateTime> endOfBufferTimeCaptor;
     @Captor
     private ArgumentCaptor<BookingStatus> statusCaptor;
     @Captor
     private ArgumentCaptor<Booking> bookingCaptor;
 
     @Test
-    @DisplayName("Should auto-calculate endTime when not provided")
+    @DisplayName("Should auto-calculate endTime")
     void autoCalculateEndTimeTest() {
         // Arrange
         User user = TestData.createTestUser1();
@@ -88,6 +86,37 @@ public class BookingServiceUnitTest {
         Booking savedBooking = bookingCaptor.getValue();
         assertThat(savedBooking.getEndTime()).isEqualTo(
                 request.startTime().plusMinutes(SessionType.MEDIUM.getDurationMinutes()));
+    }
+    @Test
+    @DisplayName("Should auto-calculate endOfBufferTime")
+    void autoCalculateEndOfBufferTimeTest() {
+        // Arrange
+        User user = TestData.createTestUser1();
+        user.setId(TEST_USER_ID);
+
+        Artist artist = TestData.createTestArtist();
+        artist.setId(TEST_ARTIST_ID);
+
+        CreateBookingRequest request = TestRequestFactory.request()
+                .ofType(SessionType.MEDIUM).at(TEST_START_TIME).build();
+
+        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
+        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artist);
+        when(bookingRepository.hasOverlap(anyLong(), any(), any(), any())).thenReturn(false);
+        when(bookingRepository.save(bookingCaptor.capture())).thenAnswer(invocation -> {
+            Booking b = bookingCaptor.getValue();
+            b.setId(1L);
+            return b;
+        });
+
+        // Act
+        BookingResponse response = bookingService.createBooking(TEST_USER_ID, request);
+
+        // Assert
+        Booking savedBooking = bookingCaptor.getValue();
+        assertThat(savedBooking.getEndOfBufferTime()).isEqualTo(
+                request.startTime().plusMinutes(SessionType.MEDIUM.getDurationMinutes())
+                        .plusMinutes(SessionType.MEDIUM.getBufferAfterMinutes()));
     }
     @Test
     @DisplayName("Should throw exception with non-existing user id")
@@ -129,13 +158,14 @@ public class BookingServiceUnitTest {
         verify(bookingRepository).hasOverlap(
                 artistIdCaptor.capture(),
                 startTimeCaptor.capture(),
-                endTimeCaptor.capture(),
+                endOfBufferTimeCaptor.capture(),
                 statusCaptor.capture()
         );
 
         assertThat(artistIdCaptor.getValue()).isEqualTo(TEST_ARTIST_ID);
         assertThat(startTimeCaptor.getValue()).isEqualTo(TEST_START_TIME);
-        assertThat(endTimeCaptor.getValue()).isEqualTo(LocalDateTime.of(2026,4,10,16,0));
+        // endOfBufferTime = session time(4h) + 2h buffer
+        assertThat(endOfBufferTimeCaptor.getValue()).isEqualTo(TEST_START_TIME.plusHours(6));
         assertThat(statusCaptor.getValue()).isEqualTo(BookingStatus.CANCELLED);
     }
     @Test

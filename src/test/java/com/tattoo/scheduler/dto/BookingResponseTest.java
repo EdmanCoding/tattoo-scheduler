@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
-import static com.tattoo.scheduler.util.TestData.createTestBooking;
+import static com.tattoo.scheduler.util.TestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class BookingResponseTest {
@@ -22,8 +22,9 @@ public class BookingResponseTest {
         assertThat(response.userId()).isEqualTo(42L);
         assertThat(response.artistId()).isEqualTo(1L);
         assertThat(response.sessionType()).isEqualTo(SessionType.MEDIUM);
-        assertThat(response.startTime()).isEqualTo(LocalDateTime.of(2026, 4, 15, 10, 0));
-        assertThat(response.endTime()).isEqualTo(LocalDateTime.of(2026, 4, 15, 14, 0));
+        assertThat(response.startTime()).isEqualTo(DEFAULT_START_TIME);
+        assertThat(response.endTime()).isEqualTo(DEFAULT_END_TIME);
+        assertThat(response.endOfBufferTime()).isEqualTo(DEFAULT_END_OF_BUFFER_TIME);
         assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
         assertThat(response.notes()).isEqualTo("Test notes");
         assertThat(response.imagePath()).isEqualTo("/images/test.png");

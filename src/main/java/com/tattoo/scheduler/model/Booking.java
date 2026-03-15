@@ -43,6 +43,11 @@ public class Booking {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
+    @NotNull(message = "Buffer time is required")
+    @Column(nullable = false)
+    private LocalDateTime endOfBufferTime;
+
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private BookingStatus status = BookingStatus.PENDING;
 

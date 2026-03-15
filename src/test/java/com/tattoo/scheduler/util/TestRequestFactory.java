@@ -5,9 +5,9 @@ import com.tattoo.scheduler.model.SessionType;
 
 import java.time.LocalDateTime;
 
+import static com.tattoo.scheduler.util.TestData.DEFAULT_START_TIME;
+
 public class TestRequestFactory {
-    public static final LocalDateTime DEFAULT_START_TIME = LocalDateTime.of(2026, 4, 15, 10, 0);
-    public static final LocalDateTime DEFAULT_END_TIME = LocalDateTime.of(2026, 4, 15, 14, 0);
 
     public static RequestBuilder request(){
         return new RequestBuilder();

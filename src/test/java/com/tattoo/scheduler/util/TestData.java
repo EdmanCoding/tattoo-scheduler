@@ -5,10 +5,16 @@ import com.tattoo.scheduler.model.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import static com.tattoo.scheduler.util.TestRequestFactory.DEFAULT_END_TIME;
-import static com.tattoo.scheduler.util.TestRequestFactory.DEFAULT_START_TIME;
-
 public class TestData {
+    // === Constants ===
+    public static final LocalDateTime DEFAULT_START_TIME = LocalDateTime.of(2026, 4, 15, 10, 0);
+    public static final LocalDateTime DEFAULT_END_TIME = LocalDateTime.of(2026, 4, 15, 14, 0);
+    public static final LocalDateTime DEFAULT_END_OF_BUFFER_TIME = LocalDateTime.of(2026, 4, 15, 16, 0);
+
+    public static final Long TEST_USER_ID = 1L;
+    public static final Long TEST_ARTIST_ID = 1L;
+    public static final Long TEST_NONEXISTING_USER_ID = 658L;
+
     public static Artist createTestArtist() {
         return Artist.builder()
                 .id(1L)
@@ -38,7 +44,12 @@ public class TestData {
     }
     public static User createUserWithId(Long id) {
         return User.builder()
-                .id(id).build();
+                .id(id)
+                .name("TestUser")
+                .phoneNumber("123-4567")
+                .email("testMailUser@email.com")
+                .password("secret")
+                .birthDate(LocalDate.of(2001,4,15)).build();
     }
     public static Booking createTestBooking(){
         return createTestBooking(99L, 42L, 1L);
@@ -51,6 +62,7 @@ public class TestData {
                 .sessionType(SessionType.MEDIUM)
                 .startTime(DEFAULT_START_TIME)
                 .endTime(DEFAULT_END_TIME)
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)
                 .status(BookingStatus.PENDING)
                 .notes("Test notes")
                 .imagePath("/images/test.png")

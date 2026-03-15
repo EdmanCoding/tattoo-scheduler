@@ -9,8 +9,7 @@ import com.tattoo.scheduler.repository.ArtistRepository;
 import com.tattoo.scheduler.repository.BookingRepository;
 import com.tattoo.scheduler.repository.UserRepository;
 
-import static com.tattoo.scheduler.util.TestRequestFactory.DEFAULT_END_TIME;
-import static com.tattoo.scheduler.util.TestRequestFactory.DEFAULT_START_TIME;
+import static com.tattoo.scheduler.util.TestData.*;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
-
-import java.time.LocalDateTime;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -41,20 +38,21 @@ public class BookingServiceIntegratedTest {
     @DisplayName("Should prevent overlapping bookings for the same artist")
     void overlappingBookingsTest() {
         // Arrange
-        // Create and save artist & user using repositories
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user = userRepository.save(TestData.createTestUser1());
+        Artist artist = artistRepository.getReferenceById(1L);
 
         // Create and save existing booking
         Booking existing = Booking.builder()
                 .artist(artist)
                 .user(user)
                 .sessionType(SessionType.MEDIUM)
-                .startTime(DEFAULT_START_TIME)
-                .endTime(DEFAULT_END_TIME).build();
+                .startTime(DEFAULT_START_TIME)                  //10:00
+                .endTime(DEFAULT_END_TIME)                      //14:00
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)    //16:00
+                .build();
         bookingRepository.save(existing);
 
-        // Create overlapping request
+        // Create overlapping request (11:00-15:00)
         CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
                 DEFAULT_START_TIME.plusHours(1), "Overlapping attempt", null);
 
@@ -66,18 +64,20 @@ public class BookingServiceIntegratedTest {
     @DisplayName("Should prevent bookings at the same time for the same artist")
     void sameTimeBookingsTest() {
         // Arrange
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user = userRepository.save(TestData.createTestUser1());
+        Artist artist = artistRepository.getReferenceById(1L);
 
         Booking existing = Booking.builder()
                 .artist(artist)
                 .user(user)
                 .sessionType(SessionType.MEDIUM)
-                .startTime(DEFAULT_START_TIME)
-                .endTime(DEFAULT_END_TIME).build();
+                .startTime(DEFAULT_START_TIME)                  //10:00
+                .endTime(DEFAULT_END_TIME)                      //14:00
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)    //16:00
+                .build();
         bookingRepository.save(existing);
 
-        // Create overlapping request at the same time
+        // Create overlapping request at the same time (10:00-14:00)
         CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
                 DEFAULT_START_TIME, "Overlapping attempt", null);
 
@@ -90,15 +90,17 @@ public class BookingServiceIntegratedTest {
     @DisplayName("Should prevent overlapping with buffer of previous booking for the same artist")
     void overlappingWithBufferTest() {
         // Arrange
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user = userRepository.save(TestData.createTestUser1());
+        Artist artist = artistRepository.getReferenceById(1L);
 
         Booking existing = Booking.builder()
                 .artist(artist)
                 .user(user)
                 .sessionType(SessionType.MEDIUM)    // 2 hours buffer
-                .startTime(DEFAULT_START_TIME)      // 10:00
-                .endTime(DEFAULT_END_TIME).build(); // 14:00
+                .startTime(DEFAULT_START_TIME)                  //10:00
+                .endTime(DEFAULT_END_TIME)                      //14:00
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)    //16:00
+                .build();
         bookingRepository.save(existing);
 
         // Create overlapping with buffer (start at 15:00) request
@@ -115,15 +117,17 @@ public class BookingServiceIntegratedTest {
             "for the same artist with different session types")
     void overlappingWithBufferDifferentSessionsTest() {
         // Arrange
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user = userRepository.save(TestData.createTestUser1());
+        Artist artist = artistRepository.getReferenceById(1L);
 
         Booking existing = Booking.builder()
                 .artist(artist)
                 .user(user)
-                .sessionType(SessionType.SMALL)     // 1 hour buffer
-                .startTime(DEFAULT_START_TIME)      // 10:00
-                .endTime(DEFAULT_START_TIME.plusHours(1)).build(); // 11:00
+                .sessionType(SessionType.SMALL)             // 1 hour buffer
+                .startTime(DEFAULT_START_TIME)              // 10:00
+                .endTime(DEFAULT_START_TIME.plusHours(1))   // 11:00
+                .endOfBufferTime(DEFAULT_START_TIME.plusHours(2))  // 12:00
+                .build();
         bookingRepository.save(existing);
 
         // Create overlapping with buffer (start at 11:30) request
@@ -140,16 +144,18 @@ public class BookingServiceIntegratedTest {
     @DisplayName("Overlapping validation should work on bookings from different users")
     void differentUsersOverlappingBookingTest() {
         // Arrange
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user1 = userRepository.save(TestData.createTestUser1());
         User user2 = userRepository.save(TestData.createTestUser2());
+        Artist artist = artistRepository.getReferenceById(1L);
 
         Booking existing = Booking.builder()
                 .artist(artist)
                 .user(user1)
-                .sessionType(SessionType.MEDIUM)     // 2 hours buffer
-                .startTime(DEFAULT_START_TIME)      // 10:00
-                .endTime(DEFAULT_END_TIME).build(); // 14:00
+                .sessionType(SessionType.MEDIUM)        // 2 hours buffer
+                .startTime(DEFAULT_START_TIME)                  // 10:00
+                .endTime(DEFAULT_END_TIME)                      // 14:00
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)    // 16:00
+                .build();
         bookingRepository.save(existing);
 
         // Create overlapping (11:00-15:00) request
@@ -166,15 +172,17 @@ public class BookingServiceIntegratedTest {
     @DisplayName("Should allow booking exactly when buffer period ends")
     void adjacentAfterBufferTest() {
         // Arrange
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user = userRepository.save(TestData.createTestUser1());
+        Artist artist = artistRepository.getReferenceById(1L);
 
         Booking existing = Booking.builder()
                 .artist(artist)
                 .user(user)
-                .sessionType(SessionType.MEDIUM)    // 2 hours buffer
-                .startTime(DEFAULT_START_TIME)      // 10:00
-                .endTime(DEFAULT_END_TIME).build(); // 14:00
+                .sessionType(SessionType.MEDIUM)        // 2 hours buffer
+                .startTime(DEFAULT_START_TIME)                  // 10:00
+                .endTime(DEFAULT_END_TIME)                      // 14:00
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)    // 16:00
+                .build();
         bookingRepository.save(existing);
 
         // Try to book exactly when buffer ends (16:00)
@@ -187,8 +195,9 @@ public class BookingServiceIntegratedTest {
         assertThat(response.id()).isNotNull();                     // ID generated
         assertThat(response.startTime()).isEqualTo(DEFAULT_START_TIME.plusHours(6));
         assertThat(response.endTime()).isEqualTo(DEFAULT_START_TIME.plusHours(10));
+        assertThat(response.endOfBufferTime()).isEqualTo(DEFAULT_START_TIME.plusHours(12));
         assertThat(response.userId()).isEqualTo(user.getId());  // references correct user
-        assertThat(response.artistId()).isEqualTo(artist.getId()); // correct artist
+        assertThat(response.artistId()).isEqualTo(artist.getId());
         assertThat(response.sessionType()).isEqualTo(SessionType.MEDIUM);
         assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
         assertThat(response.notes()).isEqualTo("Adjacent booking");
@@ -201,7 +210,6 @@ public class BookingServiceIntegratedTest {
     @DisplayName("Should create booking when no conflicts exist")
     void happyPathTest() {
         // Arrange
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user = userRepository.save(TestData.createTestUser1());
         // No existing bookings
         CreateBookingRequest request = new CreateBookingRequest(SessionType.MEDIUM,
@@ -214,8 +222,9 @@ public class BookingServiceIntegratedTest {
         assertThat(response.id()).isNotNull();                     // ID generated
         assertThat(response.startTime()).isEqualTo(DEFAULT_START_TIME);
         assertThat(response.endTime()).isEqualTo(DEFAULT_END_TIME);
+        assertThat(response.endOfBufferTime()).isEqualTo(DEFAULT_END_OF_BUFFER_TIME);
         assertThat(response.userId()).isEqualTo(user.getId());  // references correct user
-        assertThat(response.artistId()).isEqualTo(artist.getId()); // correct artist
+        assertThat(response.artistId()).isEqualTo(artistRepository.getReferenceById(1L).getId());
         assertThat(response.sessionType()).isEqualTo(SessionType.MEDIUM);
         assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
         assertThat(response.notes()).isEqualTo("First booking");
@@ -228,16 +237,18 @@ public class BookingServiceIntegratedTest {
     @DisplayName("Can be overlapped with cancelled session")
     void cancelledSessionOverlappingTest() {
         // Arrange
-        Artist artist = artistRepository.save(TestData.createTestArtist());
         User user = userRepository.save(TestData.createTestUser1());
+        Artist artist = artistRepository.getReferenceById(1L);
 
         Booking existing = Booking.builder()
                 .artist(artist)
                 .user(user)
                 .status(BookingStatus.CANCELLED)
                 .sessionType(SessionType.MEDIUM)    // 2 hours buffer
-                .startTime(DEFAULT_START_TIME)      // 10:00
-                .endTime(DEFAULT_END_TIME).build(); // 14:00
+                .startTime(DEFAULT_START_TIME)                  // 10:00
+                .endTime(DEFAULT_END_TIME)                      // 14:00
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)    // 16:00
+                .build();
         bookingRepository.save(existing);
 
         // Try to book exactly the same time (10:00-14:00)
@@ -250,8 +261,9 @@ public class BookingServiceIntegratedTest {
         assertThat(response.id()).isNotNull();                     // ID generated
         assertThat(response.startTime()).isEqualTo(DEFAULT_START_TIME);
         assertThat(response.endTime()).isEqualTo(DEFAULT_END_TIME);
+        assertThat(response.endOfBufferTime()).isEqualTo(DEFAULT_END_OF_BUFFER_TIME);
         assertThat(response.userId()).isEqualTo(user.getId());  // references correct user
-        assertThat(response.artistId()).isEqualTo(artist.getId()); // correct artist
+        assertThat(response.artistId()).isEqualTo(artist.getId());
         assertThat(response.sessionType()).isEqualTo(SessionType.MEDIUM);
         assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
         assertThat(response.notes()).isEqualTo("Same time booking");
