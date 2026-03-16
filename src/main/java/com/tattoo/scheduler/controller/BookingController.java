@@ -3,6 +3,7 @@ package com.tattoo.scheduler.controller;
 import com.tattoo.scheduler.dto.BookingResponse;
 import com.tattoo.scheduler.dto.CreateBookingRequest;
 import com.tattoo.scheduler.service.BookingService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(
             @RequestHeader("X-User-Id") Long userId,
-            @RequestBody CreateBookingRequest request){
+            @RequestBody @Valid CreateBookingRequest request){
         BookingResponse bookingResponse = bookingService.createBooking(userId, request);
         return ResponseEntity.status(201).body(bookingResponse);
     }
