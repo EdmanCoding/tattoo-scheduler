@@ -26,6 +26,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                        @Param("endOfBufferTime") LocalDateTime endOfBufferTime,
                        @Param("excludedStatus") BookingStatus excludedStatus);
 
+    @Query("""
+            SELECT b FROM Booking b
+            WHERE b.artist.id = :artistId
+            AND b.startTime BETWEEN :dayStart AND :dayEnd
+            AND b.status != :excludedStatus
+            """)
+    List<Booking> findOccupiedIntervals(@Param("artistId") Long artistId,
+                                        @Param("dayStart") LocalDateTime dayStart,
+                                        @Param("dayEnd") LocalDateTime dayEnd,
+                                        @Param("excludedStatus") BookingStatus excludedStatus);
+
     // Helper for calendar view
     List<Booking> findByArtistIdAndStatusNot(Long artistId, BookingStatus status);
 }
