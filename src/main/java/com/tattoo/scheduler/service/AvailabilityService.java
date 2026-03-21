@@ -5,78 +5,52 @@ import com.tattoo.scheduler.model.Booking;
 import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.model.SessionType;
 import com.tattoo.scheduler.repository.BookingRepository;
+import com.tattoo.scheduler.service.policy.BookingPolicy;
 import com.tattoo.scheduler.service.resolver.ArtistResolver;
+import com.tattoo.scheduler.service.slot.SlotGenerator;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static com.tattoo.scheduler.service.constants.BookingConstants.WORK_END_HOUR;
+import static com.tattoo.scheduler.service.constants.BookingConstants.WORK_START_HOUR;
 
 @Service
 public class AvailabilityService {
     private final BookingRepository bookingRepository;
     private final ArtistResolver artistResolver;
-    private static final int SLOT_GRANULARITY_MINUTES = 15;
-    private static final int WORK_START_HOUR = 10;
-    private static final int WORK_END_HOUR = 20;
+    private final BookingPolicy bookingPolicy;;
+    private final SlotGenerator slotGenerator;
 
     public AvailabilityService(BookingRepository bookingRepository,
-                               ArtistResolver artistResolver) {
+                               ArtistResolver artistResolver,
+                               BookingPolicy bookingPolicy,
+                               SlotGenerator slotGenerator) {
         this.bookingRepository = bookingRepository;
         this.artistResolver = artistResolver;
+        this.bookingPolicy = bookingPolicy;
+        this.slotGenerator = slotGenerator;
     }
 
     public List<LocalDateTime> getAvailableStartTimes(LocalDate date,
-                                                      SessionType sessionType, Long artistId) {
-        // Resolver handles null -> default
-        Artist artist = artistResolver.getArtist(artistId);
+                                                      SessionType sessionType,
+                                                      Long artistId) {
+        if(!bookingPolicy.isDateAllowed(date))
+            return Collections.emptyList();
 
-        // Define working hours
+        Artist artist = artistResolver.getArtist(artistId);
         LocalDateTime dayStart = date.atTime(WORK_START_HOUR, 0);
         LocalDateTime dayEnd = date.atTime(WORK_END_HOUR, 0);
 
-        // Calculate durations
-        long duration = sessionType.getDurationMinutes();
-        long buffer = sessionType.getBufferAfterMinutes();
-
-        // Fetch existing bookings for this artist on this day
         List<Booking> existingBookings = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
 
-        // Generate available slots
-        return generateAvailableSlots(dayStart, dayEnd, duration, buffer, existingBookings);
-    }
+        if(!bookingPolicy.respectsLargeExclusivity(sessionType, existingBookings))
+            return Collections.emptyList();
 
-    private List<LocalDateTime> generateAvailableSlots(LocalDateTime dayStart,
-                                                       LocalDateTime dayEnd,
-                                                       long duration,
-                                                       long buffer,
-                                                       List<Booking> existingBookings) {
-        List<LocalDateTime> availableSlots = new ArrayList<>();
-        LocalDateTime candidate = dayStart;
-        long totalBlock = duration + buffer;
-
-        while (candidate.plusMinutes(duration).isBefore(dayEnd) ||
-                candidate.plusMinutes(duration).isEqual(dayEnd)) {
-            LocalDateTime protectedEnd = candidate.plusMinutes(totalBlock);
-
-            // Check if candidate conflicts with any existing booking
-            boolean conflict = hasConflict(candidate, protectedEnd, existingBookings);
-            if (!conflict) {
-                availableSlots.add(candidate);
-                candidate = protectedEnd; // Jump over occupied block
-            } else {
-                candidate = candidate.plusMinutes(SLOT_GRANULARITY_MINUTES);
-            }
-        }
-        return availableSlots;
-    }
-    private boolean hasConflict(LocalDateTime start, LocalDateTime protectedEnd,
-                                List<Booking> existingBookings) {
-        return existingBookings.stream().anyMatch(booking ->
-                start.isBefore(booking.getEndOfBufferTime()) &&
-                        protectedEnd.isAfter(booking.getStartTime())
-        );
+        return slotGenerator.generate(dayStart, dayEnd, sessionType, existingBookings);
     }
 }

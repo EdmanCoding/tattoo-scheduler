@@ -51,6 +51,20 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- MapStruct: bean mapping library (generates type-safe mappers at compile time) -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.6.3</version> <!-- check latest version -->
+        </dependency>
+        <!-- MapStruct annotation processor: generates mapper implementations during compilation -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.6.3</version>
+            <scope>provided</scope> <!-- Only needed at compile time, not at runtime -->
+        </dependency>
+
         <!-- Lombok: annotation processor, compile-time only -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -95,6 +109,11 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.6.3</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

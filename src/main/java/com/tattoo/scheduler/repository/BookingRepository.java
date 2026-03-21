@@ -29,7 +29,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
             SELECT b FROM Booking b
             WHERE b.artist.id = :artistId
-            AND b.startTime BETWEEN :dayStart AND :dayEnd
+            AND b.startTime < :dayEnd AND b.endOfBufferTime > :dayStart
             AND b.status != :excludedStatus
             """)
     List<Booking> findOccupiedIntervals(@Param("artistId") Long artistId,
