@@ -1,6 +1,6 @@
 package com.tattoo.scheduler.dto;
 
-import com.tattoo.scheduler.model.Booking;
+import com.tattoo.scheduler.model.BookingEntity;
 import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.model.SessionType;
 import org.junit.jupiter.api.Test;
@@ -14,9 +14,9 @@ public class BookingResponseTest {
     @Test
     public void from_ShouldMapAllFieldsTest() {
         // Arrange
-        Booking booking = createTestBooking();
+        BookingEntity bookingEntity = createTestBooking();
         // Act
-        BookingResponse response = BookingResponse.from(booking);
+        BookingResponse response = BookingResponse.from(bookingEntity);
         // Assert
         assertThat(response.id()).isEqualTo(99L);
         assertThat(response.userId()).isEqualTo(42L);

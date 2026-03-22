@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Artist {
+public class ArtistEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -39,6 +39,6 @@ public class Artist {
     }
 
     // Just for navigation!
-    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
-    private List<Booking> bookings;
+    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private List<BookingEntity> bookingEntities;
 }

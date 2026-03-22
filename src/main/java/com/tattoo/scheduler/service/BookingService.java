@@ -1,72 +1,48 @@
 package com.tattoo.scheduler.service;
 
-import com.tattoo.scheduler.dto.BookingResponse;
-import com.tattoo.scheduler.dto.CreateBookingRequest;
-import com.tattoo.scheduler.model.Artist;
-import com.tattoo.scheduler.model.Booking;
-import com.tattoo.scheduler.model.BookingStatus;
-import com.tattoo.scheduler.model.User;
+import com.tattoo.scheduler.domain.Booking;
+import com.tattoo.scheduler.mapper.BookingMapper;
+import com.tattoo.scheduler.model.BookingEntity;
 import com.tattoo.scheduler.repository.ArtistRepository;
 import com.tattoo.scheduler.repository.BookingRepository;
 import com.tattoo.scheduler.repository.UserRepository;
-import com.tattoo.scheduler.service.exception.BookingConflictException;
-import com.tattoo.scheduler.service.exception.UserNotFoundException;
+import com.tattoo.scheduler.service.creator.BookingCreator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 public class BookingService {
     private final BookingRepository bookingRepository;
+    private final BookingCreator bookingCreator;
+    private final BookingMapper bookingMapper;
     private final UserRepository userRepository;
     private final ArtistRepository artistRepository;
     public BookingService(BookingRepository bookingRepository,
+                          BookingCreator bookingCreator,
+                          BookingMapper bookingMapper,
                           UserRepository userRepository,
                           ArtistRepository artistRepository) {
         this.bookingRepository = bookingRepository;
+        this.bookingCreator = bookingCreator;
+        this.bookingMapper = bookingMapper;
         this.userRepository = userRepository;
         this.artistRepository = artistRepository;
     }
 
     @Transactional
-    public BookingResponse createBooking(Long userId, CreateBookingRequest request) {
-        // 1. create booking. Auto-calculate endTime and bufferTime
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+    public Booking createBooking(Booking request) {
+        // 1. Enrich and validate (throws if invalid)
+        Booking enriched = bookingCreator.enrichAndValidate(request);
 
-        Artist artist = artistRepository.getReferenceById(1L);
+        // 2. Convert to entity and set user/artist references
+        BookingEntity entity = bookingMapper.toEntity(enriched);
+        entity.setUserEntity(userRepository.getReferenceById(enriched.getUserId()));
+        entity.setArtistEntity(artistRepository.getReferenceById(enriched.getArtistId()));
 
-        LocalDateTime startTime = request.startTime();
-        LocalDateTime endTime = startTime.plusMinutes(request.sessionType().getDurationMinutes());
-        LocalDateTime endOfBufferTime = endTime.plusMinutes(request.sessionType().getBufferAfterMinutes());
+        // 3. Save
+        BookingEntity saved = bookingRepository.save(entity);
 
-        Booking booking = Booking.builder()
-                .user(user)
-                .artist(artist)
-                .sessionType(request.sessionType())
-                .notes(request.notes())
-                .imagePath(request.imagePath())
-                .startTime(request.startTime())
-                .endTime(endTime)
-                .endOfBufferTime(endOfBufferTime)
-                .build();
-
-        // 2. Check for overlapping bookings taking into account buffer time (DB-level query)
-        boolean conflict = bookingRepository.hasOverlap(
-                booking.getArtist().getId(),
-                booking.getStartTime(),
-                booking.getEndOfBufferTime(),
-                BookingStatus.CANCELLED
-        );
-        if (conflict) {
-            throw new BookingConflictException(
-                    booking.getArtist().getId(),
-                    booking.getStartTime()
-            );
-        }
-
-        Booking savedBooking = bookingRepository.save(booking);
-        return BookingResponse.from(savedBooking);
+        // 4. Convert back to domain
+        return bookingMapper.toDomain(saved);
     }
 }

@@ -1,6 +1,6 @@
 package com.tattoo.scheduler.service.slot.impl;
 
-import com.tattoo.scheduler.model.Booking;
+import com.tattoo.scheduler.domain.Booking;
 import com.tattoo.scheduler.model.SessionType;
 import com.tattoo.scheduler.service.policy.BookingPolicy;
 import com.tattoo.scheduler.service.slot.SlotGenerator;
@@ -15,9 +15,7 @@ public class DefaultSlotGenerator implements SlotGenerator {
     private final BookingPolicy bookingPolicy;
     private static final int SLOT_GRANULARITY_MINUTES = 15;
 
-    public DefaultSlotGenerator(BookingPolicy bookingPolicy) {
-        this.bookingPolicy = bookingPolicy;
-    }
+    public DefaultSlotGenerator(BookingPolicy bookingPolicy) { this.bookingPolicy = bookingPolicy; }
 
     @Override
     public List<LocalDateTime> generate (LocalDateTime dayStart, LocalDateTime dayEnd,
@@ -29,7 +27,7 @@ public class DefaultSlotGenerator implements SlotGenerator {
 
         while(candidate.plusMinutes(duration).isBefore(dayEnd) ||
         candidate.plusMinutes(duration).isEqual(dayEnd)) {
-            if(bookingPolicy.hasNoConflict(candidate,sessionType,existingBookings)) {
+            if(bookingPolicy.hasNoConflict(candidate,sessionType, existingBookings)) {
                 slots.add(candidate);
                 candidate = candidate.plusMinutes(totalBlock);
             } else {

@@ -12,6 +12,10 @@ public class BookingConflictException extends RuntimeException {
         super(String.format("Cannot book at %s for artist %d due to conflict with existing booking",
                 requestedStart, artistId));
     }
+    public BookingConflictException(Long artistId, LocalDateTime requestedStart, String message) {
+        super(String.format("Cannot book at %s for artist %d: %s",
+                requestedStart, artistId, message));
+    }
     // Constructor with full details
     public BookingConflictException(Long artistId,
                                     LocalDateTime requestedStart,

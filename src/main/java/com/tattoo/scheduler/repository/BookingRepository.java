@@ -1,6 +1,6 @@
 package com.tattoo.scheduler.repository;
 
-import com.tattoo.scheduler.model.Booking;
+import com.tattoo.scheduler.model.BookingEntity;
 import com.tattoo.scheduler.model.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByArtistId(Long artistId);
+public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
+    List<BookingEntity> findByArtistId(Long artistId);
 
     @Query("""
             SELECT COUNT(b)>0
-            FROM Booking b WHERE b.artist.id = :artistId
+            FROM BookingEntity b WHERE b.artist.id = :artistId
             AND b.startTime < :endOfBufferTime
             AND b.endOfBufferTime > :startTime
             AND b.status != :excludedStatus
@@ -27,16 +27,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                        @Param("excludedStatus") BookingStatus excludedStatus);
 
     @Query("""
-            SELECT b FROM Booking b
+            SELECT b FROM BookingEntity b
             WHERE b.artist.id = :artistId
             AND b.startTime < :dayEnd AND b.endOfBufferTime > :dayStart
             AND b.status != :excludedStatus
             """)
-    List<Booking> findOccupiedIntervals(@Param("artistId") Long artistId,
-                                        @Param("dayStart") LocalDateTime dayStart,
-                                        @Param("dayEnd") LocalDateTime dayEnd,
-                                        @Param("excludedStatus") BookingStatus excludedStatus);
+    List<BookingEntity> findOccupiedIntervals(@Param("artistId") Long artistId,
+                                              @Param("dayStart") LocalDateTime dayStart,
+                                              @Param("dayEnd") LocalDateTime dayEnd,
+                                              @Param("excludedStatus") BookingStatus excludedStatus);
 
     // Helper for calendar view
-    List<Booking> findByArtistIdAndStatusNot(Long artistId, BookingStatus status);
+    List<BookingEntity> findByArtistIdAndStatusNot(Long artistId, BookingStatus status);
 }

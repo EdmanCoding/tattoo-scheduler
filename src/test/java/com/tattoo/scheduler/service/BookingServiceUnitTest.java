@@ -55,26 +55,26 @@ public class BookingServiceUnitTest {
     @Captor
     private ArgumentCaptor<BookingStatus> statusCaptor;
     @Captor
-    private ArgumentCaptor<Booking> bookingCaptor;
+    private ArgumentCaptor<BookingEntity> bookingCaptor;
 
     @Test
     @DisplayName("Should auto-calculate endTime")
     void autoCalculateEndTimeTest() {
         // Arrange
-        User user = TestData.createTestUser1();
-        user.setId(TEST_USER_ID);
+        UserEntity userEntity = TestData.createTestUser1();
+        userEntity.setId(TEST_USER_ID);
 
-        Artist artist = TestData.createTestArtist();
-        artist.setId(TEST_ARTIST_ID);
+        ArtistEntity artistEntity = TestData.createTestArtist();
+        artistEntity.setId(TEST_ARTIST_ID);
 
         CreateBookingRequest request = TestRequestFactory.request()
                 .ofType(SessionType.MEDIUM).at(TEST_START_TIME).build();
 
-        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
-        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artist);
+        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(userEntity));
+        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artistEntity);
         when(bookingRepository.hasOverlap(anyLong(), any(), any(), any())).thenReturn(false);
         when(bookingRepository.save(bookingCaptor.capture())).thenAnswer(invocation -> {
-            Booking b = bookingCaptor.getValue();
+            BookingEntity b = bookingCaptor.getValue();
             b.setId(1L);
             return b;
         });
@@ -83,28 +83,28 @@ public class BookingServiceUnitTest {
         BookingResponse response = bookingService.createBooking(TEST_USER_ID, request);
 
         // Assert
-        Booking savedBooking = bookingCaptor.getValue();
-        assertThat(savedBooking.getEndTime()).isEqualTo(
+        BookingEntity savedBookingEntity = bookingCaptor.getValue();
+        assertThat(savedBookingEntity.getEndTime()).isEqualTo(
                 request.startTime().plusMinutes(SessionType.MEDIUM.getDurationMinutes()));
     }
     @Test
     @DisplayName("Should auto-calculate endOfBufferTime")
     void autoCalculateEndOfBufferTimeTest() {
         // Arrange
-        User user = TestData.createTestUser1();
-        user.setId(TEST_USER_ID);
+        UserEntity userEntity = TestData.createTestUser1();
+        userEntity.setId(TEST_USER_ID);
 
-        Artist artist = TestData.createTestArtist();
-        artist.setId(TEST_ARTIST_ID);
+        ArtistEntity artistEntity = TestData.createTestArtist();
+        artistEntity.setId(TEST_ARTIST_ID);
 
         CreateBookingRequest request = TestRequestFactory.request()
                 .ofType(SessionType.MEDIUM).at(TEST_START_TIME).build();
 
-        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
-        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artist);
+        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(userEntity));
+        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artistEntity);
         when(bookingRepository.hasOverlap(anyLong(), any(), any(), any())).thenReturn(false);
         when(bookingRepository.save(bookingCaptor.capture())).thenAnswer(invocation -> {
-            Booking b = bookingCaptor.getValue();
+            BookingEntity b = bookingCaptor.getValue();
             b.setId(1L);
             return b;
         });
@@ -113,8 +113,8 @@ public class BookingServiceUnitTest {
         BookingResponse response = bookingService.createBooking(TEST_USER_ID, request);
 
         // Assert
-        Booking savedBooking = bookingCaptor.getValue();
-        assertThat(savedBooking.getEndOfBufferTime()).isEqualTo(
+        BookingEntity savedBookingEntity = bookingCaptor.getValue();
+        assertThat(savedBookingEntity.getEndOfBufferTime()).isEqualTo(
                 request.startTime().plusMinutes(SessionType.MEDIUM.getDurationMinutes())
                         .plusMinutes(SessionType.MEDIUM.getBufferAfterMinutes()));
     }
@@ -133,22 +133,22 @@ public class BookingServiceUnitTest {
     @DisplayName("Should call hasOverlap with correct parameters")
     void hasOverlapWithCorrectParametersTest() {
         // Arrange
-        User user = TestData.createTestUser1();
-        user.setId(TEST_USER_ID);
+        UserEntity userEntity = TestData.createTestUser1();
+        userEntity.setId(TEST_USER_ID);
 
-        Artist artist = TestData.createTestArtist();
-        artist.setId(TEST_ARTIST_ID);
+        ArtistEntity artistEntity = TestData.createTestArtist();
+        artistEntity.setId(TEST_ARTIST_ID);
 
         CreateBookingRequest request = TestRequestFactory.request()
                 .ofType(SessionType.MEDIUM).at(TEST_START_TIME).build();
 
-        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
-        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artist);
+        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(userEntity));
+        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artistEntity);
         // Mock hasOverlap to return false (no conflict)
         when(bookingRepository.hasOverlap(anyLong(), any(), any(), any()))
                 .thenReturn(false);
         // Mock save to return the booking
-        when(bookingRepository.save(any(Booking.class)))
+        when(bookingRepository.save(any(BookingEntity.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
@@ -172,16 +172,16 @@ public class BookingServiceUnitTest {
     @DisplayName("Should throw BookingConflictException when time slot is taken")
     void conflictTest() {
         // Arrange
-        User user = TestData.createTestUser1();
-        user.setId(TEST_USER_ID);
-        Artist artist = TestData.createTestArtist();
-        artist.setId(TEST_ARTIST_ID);
+        UserEntity userEntity = TestData.createTestUser1();
+        userEntity.setId(TEST_USER_ID);
+        ArtistEntity artistEntity = TestData.createTestArtist();
+        artistEntity.setId(TEST_ARTIST_ID);
 
         CreateBookingRequest request = TestRequestFactory.request()
                 .ofType(SessionType.MEDIUM).at(TEST_START_TIME).build();
 
-        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(user));
-        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artist);
+        when(userRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(userEntity));
+        when(artistRepository.getReferenceById(TEST_ARTIST_ID)).thenReturn(artistEntity);
         when(bookingRepository.hasOverlap(anyLong(), any(), any(), any())).thenReturn(true); // Conflict!
 
         // Act & Assert

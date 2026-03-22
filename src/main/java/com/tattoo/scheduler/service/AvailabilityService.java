@@ -1,7 +1,10 @@
 package com.tattoo.scheduler.service;
 
-import com.tattoo.scheduler.model.Artist;
-import com.tattoo.scheduler.model.Booking;
+import com.tattoo.scheduler.domain.Artist;
+import com.tattoo.scheduler.domain.Booking;
+import com.tattoo.scheduler.mapper.BookingMapper;
+import com.tattoo.scheduler.model.ArtistEntity;
+import com.tattoo.scheduler.model.BookingEntity;
 import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.model.SessionType;
 import com.tattoo.scheduler.repository.BookingRepository;
@@ -22,17 +25,20 @@ import static com.tattoo.scheduler.service.constants.BookingConstants.WORK_START
 public class AvailabilityService {
     private final BookingRepository bookingRepository;
     private final ArtistResolver artistResolver;
-    private final BookingPolicy bookingPolicy;;
+    private final BookingPolicy bookingPolicy;
     private final SlotGenerator slotGenerator;
+    private final BookingMapper bookingMapper;
 
     public AvailabilityService(BookingRepository bookingRepository,
                                ArtistResolver artistResolver,
                                BookingPolicy bookingPolicy,
-                               SlotGenerator slotGenerator) {
+                               SlotGenerator slotGenerator,
+                               BookingMapper bookingMapper) {
         this.bookingRepository = bookingRepository;
         this.artistResolver = artistResolver;
         this.bookingPolicy = bookingPolicy;
         this.slotGenerator = slotGenerator;
+        this.bookingMapper = bookingMapper;
     }
 
     public List<LocalDateTime> getAvailableStartTimes(LocalDate date,
@@ -45,8 +51,10 @@ public class AvailabilityService {
         LocalDateTime dayStart = date.atTime(WORK_START_HOUR, 0);
         LocalDateTime dayEnd = date.atTime(WORK_END_HOUR, 0);
 
-        List<Booking> existingBookings = bookingRepository.findOccupiedIntervals(
+        List<BookingEntity> existingBookingEntities = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
+        List<Booking> existingBookings = existingBookingEntities.stream()
+                .map(bookingMapper::toDomain).toList();
 
         if(!bookingPolicy.respectsLargeExclusivity(sessionType, existingBookings))
             return Collections.emptyList();

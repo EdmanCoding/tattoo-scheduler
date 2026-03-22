@@ -1,6 +1,6 @@
 package com.tattoo.scheduler.service.policy;
 
-import com.tattoo.scheduler.model.Booking;
+import com.tattoo.scheduler.domain.Booking;
 import com.tattoo.scheduler.model.SessionType;
 
 import java.time.LocalDate;

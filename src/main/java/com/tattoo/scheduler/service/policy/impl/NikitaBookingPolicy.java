@@ -1,6 +1,6 @@
 package com.tattoo.scheduler.service.policy.impl;
 
-import com.tattoo.scheduler.model.Booking;
+import com.tattoo.scheduler.domain.Booking;
 import com.tattoo.scheduler.model.SessionType;
 import com.tattoo.scheduler.service.policy.BookingPolicy;
 import org.springframework.stereotype.Component;

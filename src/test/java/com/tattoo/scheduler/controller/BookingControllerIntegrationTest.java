@@ -1,9 +1,8 @@
 package com.tattoo.scheduler.controller;
 
-import com.tattoo.scheduler.model.User;
+import com.tattoo.scheduler.model.UserEntity;
 import com.tattoo.scheduler.repository.UserRepository;
 import com.tattoo.scheduler.util.TestData;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +13,6 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.tattoo.scheduler.util.TestData.TEST_USER_ID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -32,7 +30,7 @@ public class BookingControllerIntegrationTest {
     @Test
     void creatBooking_ShouldReturn201AndCorrectBookingTest() throws Exception {
         // Given
-        User user = userRepository.save(TestData.createTestUser1());
+        UserEntity userEntity = userRepository.save(TestData.createTestUser1());
         String requestBody = """
                 {
                 "sessionType": "MEDIUM",
@@ -43,13 +41,13 @@ public class BookingControllerIntegrationTest {
                 """;
         // When / Then
         mockMvc.perform(post("/api/bookings")
-                .header("X-User-Id", user.getId().toString())
+                .header("X-User-Id", userEntity.getId().toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andDo(print())  // Optional: prints request/response for debugging
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.userId").value(user.getId().toString()))
+                .andExpect(jsonPath("$.userId").value(userEntity.getId().toString()))
                 .andExpect(jsonPath("$.sessionType").value("MEDIUM"))
                 .andExpect(jsonPath("$.startTime").value("2026-04-15T10:00:00"))
                 .andExpect(jsonPath("$.endTime").value("2026-04-15T14:00:00"));
@@ -75,7 +73,7 @@ public class BookingControllerIntegrationTest {
     @Test
     void conflict_ShouldReturn409Test() throws Exception {
         // Given
-        User user = userRepository.save(TestData.createTestUser1());
+        UserEntity userEntity = userRepository.save(TestData.createTestUser1());
         String requestBody = """
                 {
                 "sessionType": "MEDIUM",
@@ -85,7 +83,7 @@ public class BookingControllerIntegrationTest {
                 """;
         // When / Then
         mockMvc.perform(post("/api/bookings")
-                .header("X-User-Id", user.getId().toString())
+                .header("X-User-Id", userEntity.getId().toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andExpect(status().isCreated())
@@ -100,7 +98,7 @@ public class BookingControllerIntegrationTest {
                 }
                 """;
         mockMvc.perform(post("/api/bookings")
-                .header("X-User-Id", user.getId().toString())
+                .header("X-User-Id", userEntity.getId().toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBodyConflict))
                 .andDo(print())
@@ -112,7 +110,7 @@ public class BookingControllerIntegrationTest {
     @Test
     void validationError_ShouldReturn400Test() throws Exception {
         // Given
-        User user = userRepository.save(TestData.createTestUser1());
+        UserEntity userEntity = userRepository.save(TestData.createTestUser1());
         String requestBody = """
                 {
                 "startTime": "2026-04-15T10:00:00",
@@ -120,7 +118,7 @@ public class BookingControllerIntegrationTest {
                 }
                 """;
         mockMvc.perform(post("/api/bookings")
-                .header("X-User-Id", user.getId().toString())
+                .header("X-User-Id", userEntity.getId().toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andDo(print())

@@ -15,35 +15,35 @@ public class TestData {
     public static final Long TEST_ARTIST_ID = 1L;
     public static final Long TEST_NONEXISTING_USER_ID = 658L;
 
-    public static Artist createTestArtist() {
-        return Artist.builder()
+    public static ArtistEntity createTestArtist() {
+        return ArtistEntity.builder()
                 .id(1L)
                 .name("TestArtist")
                 .email("testMail@email.com")
                 .password("secret").build();
     }
-    public static Artist createArtistWithId(Long id) {
-        return Artist.builder()
+    public static ArtistEntity createArtistWithId(Long id) {
+        return ArtistEntity.builder()
                 .id(id).build();
     }
-    public static User createTestUser1() {
-        return User.builder()
+    public static UserEntity createTestUser1() {
+        return UserEntity.builder()
                 .name("TestUser")
                 .phoneNumber("123-4567")
                 .email("testMailUser@email.com")
                 .password("secret")
                 .birthDate(LocalDate.of(2001,4,15)).build();
     }
-    public static User createTestUser2() {
-        return User.builder()
+    public static UserEntity createTestUser2() {
+        return UserEntity.builder()
                 .name("TestUser2")
                 .phoneNumber("765-4321")
                 .email("testMailUser2@email.com")
                 .password("secret")
                 .birthDate(LocalDate.of(2000,2,19)).build();
     }
-    public static User createUserWithId(Long id) {
-        return User.builder()
+    public static UserEntity createUserWithId(Long id) {
+        return UserEntity.builder()
                 .id(id)
                 .name("TestUser")
                 .phoneNumber("123-4567")
@@ -51,14 +51,14 @@ public class TestData {
                 .password("secret")
                 .birthDate(LocalDate.of(2001,4,15)).build();
     }
-    public static Booking createTestBooking(){
+    public static BookingEntity createTestBooking(){
         return createTestBooking(99L, 42L, 1L);
     }
-    public static Booking createTestBooking(Long bookingId, Long userId, Long artistId) {
-        return Booking.builder()
+    public static BookingEntity createTestBooking(Long bookingId, Long userId, Long artistId) {
+        return BookingEntity.builder()
                 .id(bookingId)
-                .user(createUserWithId(userId))
-                .artist(createArtistWithId(artistId))
+                .userEntity(createUserWithId(userId))
+                .artistEntity(createArtistWithId(artistId))
                 .sessionType(SessionType.MEDIUM)
                 .startTime(DEFAULT_START_TIME)
                 .endTime(DEFAULT_END_TIME)
