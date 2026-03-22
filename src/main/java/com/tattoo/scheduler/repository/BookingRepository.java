@@ -12,23 +12,10 @@ import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
-    List<BookingEntity> findByArtistId(Long artistId);
-
-    @Query("""
-            SELECT COUNT(b)>0
-            FROM BookingEntity b WHERE b.artist.id = :artistId
-            AND b.startTime < :endOfBufferTime
-            AND b.endOfBufferTime > :startTime
-            AND b.status != :excludedStatus
-            """)
-    boolean hasOverlap(@Param("artistId") Long artistId,
-                       @Param("startTime") LocalDateTime startTime,
-                       @Param("endOfBufferTime") LocalDateTime endOfBufferTime,
-                       @Param("excludedStatus") BookingStatus excludedStatus);
 
     @Query("""
             SELECT b FROM BookingEntity b
-            WHERE b.artist.id = :artistId
+            WHERE b.artistEntity.id = :artistId
             AND b.startTime < :dayEnd AND b.endOfBufferTime > :dayStart
             AND b.status != :excludedStatus
             """)
@@ -38,5 +25,5 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
                                               @Param("excludedStatus") BookingStatus excludedStatus);
 
     // Helper for calendar view
-    List<BookingEntity> findByArtistIdAndStatusNot(Long artistId, BookingStatus status);
+    List<BookingEntity> findByArtistEntityIdAndStatusNot(Long artistId, BookingStatus status);
 }

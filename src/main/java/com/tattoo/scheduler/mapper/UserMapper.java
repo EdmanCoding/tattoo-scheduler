@@ -3,12 +3,12 @@ package com.tattoo.scheduler.mapper;
 import com.tattoo.scheduler.domain.User;
 import com.tattoo.scheduler.model.UserEntity;
 import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
-    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
+    @Mapping(target = "bookingEntities", ignore = true)
     UserEntity ToEntity(User user);
     User toDomain(UserEntity user);
 }

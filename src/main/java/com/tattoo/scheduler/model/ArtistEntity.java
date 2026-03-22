@@ -39,6 +39,6 @@ public class ArtistEntity {
     }
 
     // Just for navigation!
-    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "artistEntity", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<BookingEntity> bookingEntities;
 }

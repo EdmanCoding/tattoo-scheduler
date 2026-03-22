@@ -35,19 +35,16 @@ public class BookingController {
             @RequestHeader("X-User-Id") Long userId,
             @RequestBody @Valid CreateBookingRequest request,
             @RequestParam(required = false) Long artistId) {
-        // 1. Get domain objects
-        User user = userResolver.getUser(userId);
-        Artist artist = artistResolver.getArtist(artistId);
 
-        // 2. Map request to domain
+        // 1. Map request to domain
         Booking booking = bookingDTOMapper.toDomain(request);
-        booking.setUserId(user.getId());
-        booking.setArtistId(artist.getId());
+        booking.setUserId(userId);
+        booking.setArtistId(artistId);
 
-        // 3. Create booking (domain)
+        // 2. Create booking (domain)
         Booking saved = bookingService.createBooking(booking);
 
-        // 4. Map to response
+        // 3. Map to response
         return ResponseEntity.status(201).body(bookingDTOMapper.toResponse(saved));
     }
 }

@@ -42,7 +42,7 @@ public class UserEntity {
     private LocalDateTime createdAt;
 
     // Just for navigation!
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "userEntity", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<BookingEntity> bookingEntities;
 
     @PrePersist
