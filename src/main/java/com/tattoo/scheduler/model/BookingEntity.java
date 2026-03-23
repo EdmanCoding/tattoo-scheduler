@@ -47,9 +47,9 @@ public class BookingEntity {
     @Column(nullable = false)
     private LocalDateTime endOfBufferTime;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
-    private BookingStatus status = BookingStatus.PENDING;
+    @Column(nullable = false)
+    private BookingStatus status;
 
     private String notes;
     private String imagePath;

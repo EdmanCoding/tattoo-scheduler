@@ -28,4 +28,8 @@ public class DefaultArtistResolver implements ArtistResolver {
         ArtistEntity entity = artistRepository.getReferenceById(id);
         return artistMapper.toDomain(entity);
     }
+    @Override
+    public Long getDefaultArtistId() {
+        return defaultArtistId;
+    }
 }

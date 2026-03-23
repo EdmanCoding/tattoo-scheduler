@@ -26,7 +26,7 @@ public class NikitaBookingPolicy implements BookingPolicy {
         LocalDateTime end = start.plusMinutes(type.getDurationMinutes());
         // Must start at or after WORK_START_HOUR, and end by WORK_END_HOUR on the same day
         return start.getHour() >= WORK_START_HOUR &&
-                (end.getHour() > WORK_END_HOUR || (end.getHour() == WORK_END_HOUR && end.getMinute() == 0))
+                (end.getHour() < WORK_END_HOUR || (end.getHour() == WORK_END_HOUR && end.getMinute() == 0))
                 && end.toLocalDate().equals(start.toLocalDate());
     }
 

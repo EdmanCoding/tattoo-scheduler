@@ -1,9 +1,7 @@
 package com.tattoo.scheduler.controller;
 
 import com.tattoo.scheduler.dto.ErrorResponse;
-import com.tattoo.scheduler.service.exception.ArtistNotFoundException;
-import com.tattoo.scheduler.service.exception.BookingConflictException;
-import com.tattoo.scheduler.service.exception.UserNotFoundException;
+import com.tattoo.scheduler.service.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -105,6 +103,34 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message(message)
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    @ExceptionHandler(BookingDateNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleBookingDateNotAllowed(
+            BookingDateNotAllowedException ex,
+            HttpServletRequest request ){
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    @ExceptionHandler(BookingOutsideWorkingHoursException.class)
+    public ResponseEntity<ErrorResponse> handleBookingOutsideWorkingHours(
+            BookingOutsideWorkingHoursException ex,
+            HttpServletRequest request ){
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
