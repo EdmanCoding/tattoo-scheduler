@@ -8,6 +8,7 @@ import com.tattoo.scheduler.model.BookingEntity;
 import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.model.SessionType;
 import com.tattoo.scheduler.repository.BookingRepository;
+import com.tattoo.scheduler.service.fetcher.BookingFetcher;
 import com.tattoo.scheduler.service.policy.BookingPolicy;
 import com.tattoo.scheduler.service.resolver.ArtistResolver;
 import com.tattoo.scheduler.service.slot.SlotGenerator;
@@ -23,38 +24,37 @@ import static com.tattoo.scheduler.service.constants.BookingConstants.WORK_START
 
 @Service
 public class AvailabilityService {
-    private final BookingRepository bookingRepository;
     private final ArtistResolver artistResolver;
     private final BookingPolicy bookingPolicy;
     private final SlotGenerator slotGenerator;
-    private final BookingMapper bookingMapper;
+    private final BookingFetcher bookingFetcher;
 
-    public AvailabilityService(BookingRepository bookingRepository,
-                               ArtistResolver artistResolver,
+    public AvailabilityService(ArtistResolver artistResolver,
                                BookingPolicy bookingPolicy,
                                SlotGenerator slotGenerator,
-                               BookingMapper bookingMapper) {
-        this.bookingRepository = bookingRepository;
+                               BookingFetcher bookingFetcher) {
         this.artistResolver = artistResolver;
         this.bookingPolicy = bookingPolicy;
         this.slotGenerator = slotGenerator;
-        this.bookingMapper = bookingMapper;
+        this.bookingFetcher = bookingFetcher;
     }
 
     public List<LocalDateTime> getAvailableStartTimes(LocalDate date,
                                                       SessionType sessionType,
                                                       Long artistId) {
+        // Date allowed?
         if(!bookingPolicy.isDateAllowed(date))
             return Collections.emptyList();
 
-        Artist artist = artistResolver.getArtist(artistId);
+        // Set default artist if not provided
+        Long resolvedArtistId = artistId != null ? artistId : artistResolver.getDefaultArtistId();
+
         LocalDateTime dayStart = date.atTime(WORK_START_HOUR, 0);
         LocalDateTime dayEnd = date.atTime(WORK_END_HOUR, 0);
 
-        List<BookingEntity> existingBookingEntities = bookingRepository.findOccupiedIntervals(
-                artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
-        List<Booking> existingBookings = existingBookingEntities.stream()
-                .map(bookingMapper::toDomain).toList();
+        // Fetch existing bookings for the day
+        List<Booking> existingBookings = bookingFetcher.getActiveBookingsForDay(
+                resolvedArtistId, date );
 
         if(!bookingPolicy.respectsLargeExclusivity(sessionType, existingBookings))
             return Collections.emptyList();

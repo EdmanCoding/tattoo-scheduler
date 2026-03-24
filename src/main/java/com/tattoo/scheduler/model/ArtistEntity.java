@@ -4,12 +4,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "artists")
+@EntityListeners(AuditingEntityListener.class)
 @Getter @Setter
 @Builder
 @NoArgsConstructor
@@ -31,12 +34,8 @@ public class ArtistEntity {
     private String password;
 
     @Column (updatable = false, nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
-
-    @PrePersist
-    void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 
     // Just for navigation!
     @OneToMany(mappedBy = "artistEntity", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

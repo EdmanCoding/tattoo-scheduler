@@ -1,13 +1,10 @@
 package com.tattoo.scheduler.service.validator.impl;
 
 import com.tattoo.scheduler.domain.Booking;
-import com.tattoo.scheduler.mapper.BookingMapper;
-import com.tattoo.scheduler.model.BookingEntity;
-import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.repository.ArtistRepository;
-import com.tattoo.scheduler.repository.BookingRepository;
 import com.tattoo.scheduler.repository.UserRepository;
 import com.tattoo.scheduler.service.exception.*;
+import com.tattoo.scheduler.service.fetcher.BookingFetcher;
 import com.tattoo.scheduler.service.policy.BookingPolicy;
 import com.tattoo.scheduler.service.validator.BookingValidator;
 import org.springframework.stereotype.Component;
@@ -16,55 +13,47 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.tattoo.scheduler.service.constants.BookingConstants.WORK_END_HOUR;
-import static com.tattoo.scheduler.service.constants.BookingConstants.WORK_START_HOUR;
 
 @Component
 public class DefaultBookingValidator implements BookingValidator {
     private final BookingPolicy policy;
-    private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final ArtistRepository artistRepository;
-    private final BookingMapper bookingMapper;
+    private final BookingFetcher bookingFetcher;
 
-    public DefaultBookingValidator(BookingPolicy policy, BookingRepository bookingRepository,
-                                   UserRepository userRepository, ArtistRepository artistRepository,
-                                   BookingMapper bookingMapper) {
+    public DefaultBookingValidator(BookingPolicy policy,
+                                   UserRepository userRepository,
+                                   ArtistRepository artistRepository,
+                                   BookingFetcher bookingFetcher) {
         this.policy = policy;
-        this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.artistRepository = artistRepository;
-        this.bookingMapper = bookingMapper;
+        this.bookingFetcher = bookingFetcher;
     }
 
     public void validate(Booking booking) {
         // 1. User exists?
-        if(!userRepository.existsById(booking.getUserId()))
+        if (!userRepository.existsById(booking.getUserId()))
             throw new UserNotFoundException(booking.getUserId());
 
         // 2. Artist exists?
-        if(!artistRepository.existsById(booking.getArtistId()))
+        if (!artistRepository.existsById(booking.getArtistId()))
             throw new ArtistNotFoundException(booking.getArtistId());
 
         // 3. Date allowed?
         LocalDateTime start = booking.getStartTime();
         LocalDate date = start.toLocalDate();
-        if(!policy.isDateAllowed(date))
+        if (!policy.isDateAllowed(date))
             throw new BookingDateNotAllowedException(date);
 
         // 4. Within working hours?
-        if(!policy.isWithinWorkingHours(start, booking.getSessionType()))
+        if (!policy.isWithinWorkingHours(start, booking.getSessionType()))
             throw new BookingOutsideWorkingHoursException(start);
 
         // 5. Fetch existing bookings for the day
-        LocalDateTime dayStart = date.atTime(WORK_START_HOUR, 0);
-        LocalDateTime dayEnd = date.atTime(WORK_END_HOUR, 0);
-        List<BookingEntity> entities = bookingRepository.findOccupiedIntervals(
-                booking.getArtistId(), dayStart, dayEnd, BookingStatus.CANCELLED);
+        List<Booking> existing = bookingFetcher.getActiveBookingsForDay(booking.getArtistId(), date);
         /* System.out.println("Found " + entities.size() + " entities for " + date);
         entities.forEach(e -> System.out.println("  - " + e.getStartTime() + " " + e.getSessionType())); */
-        List<Booking> existing = entities.stream()
-                .map(bookingMapper::toDomain).toList();
 
         // 6. LARGE exclusivity
         if (!policy.respectsLargeExclusivity(booking.getSessionType(), existing))
