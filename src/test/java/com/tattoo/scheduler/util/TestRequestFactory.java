@@ -9,9 +9,7 @@ import static com.tattoo.scheduler.util.TestData.DEFAULT_START_TIME;
 
 public class TestRequestFactory {
 
-    public static RequestBuilder request(){
-        return new RequestBuilder();
-    }
+    public static RequestBuilder request() { return new RequestBuilder(); }
 
     public static class RequestBuilder{
         private SessionType type = SessionType.MEDIUM;

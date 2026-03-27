@@ -1,5 +1,8 @@
 package com.tattoo.scheduler.util;
 
+import com.tattoo.scheduler.domain.Artist;
+import com.tattoo.scheduler.domain.Booking;
+import com.tattoo.scheduler.domain.User;
 import com.tattoo.scheduler.model.*;
 
 import java.time.LocalDate;
@@ -10,55 +13,58 @@ public class TestData {
     public static final LocalDateTime DEFAULT_START_TIME = LocalDateTime.of(2026, 4, 15, 10, 0);
     public static final LocalDateTime DEFAULT_END_TIME = LocalDateTime.of(2026, 4, 15, 14, 0);
     public static final LocalDateTime DEFAULT_END_OF_BUFFER_TIME = LocalDateTime.of(2026, 4, 15, 16, 0);
+    public static final LocalDateTime DEFAULT_CREATED_TIME = LocalDateTime.of(2026, 3, 15, 12, 44);
+    public static final LocalDateTime DEFAULT_DAY_END_TIME = LocalDateTime.of(2026, 4, 15, 20, 0);
+    public static final LocalDate DEFAULT_DATE = LocalDate.of(2026,4,15);
+    public static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.of(2000,2,22);
 
     public static final Long TEST_USER_ID = 1L;
     public static final Long TEST_ARTIST_ID = 1L;
     public static final Long TEST_NONEXISTING_USER_ID = 658L;
 
-    public static ArtistEntity createTestArtist() {
+    public static ArtistEntity createTestArtistEntity() {
         return ArtistEntity.builder()
-                .id(1L)
                 .name("TestArtist")
                 .email("testMail@email.com")
                 .password("secret").build();
     }
-    public static ArtistEntity createArtistWithId(Long id) {
-        return ArtistEntity.builder()
-                .id(id).build();
+    public static ArtistEntity createArtistEntityWithId(Long id) {
+        ArtistEntity artist = createTestArtistEntity();
+        artist.setId(id);
+        return artist;
     }
-    public static UserEntity createTestUser1() {
+    public static UserEntity createTestUserEntity1() {
         return UserEntity.builder()
                 .name("TestUser")
                 .phoneNumber("123-4567")
                 .email("testMailUser@email.com")
                 .password("secret")
-                .birthDate(LocalDate.of(2001,4,15)).build();
+                .birthDate(DEFAULT_BIRTH_DATE).build();
     }
-    public static UserEntity createTestUser2() {
+    public static UserEntity createTestUserEntity2() {
         return UserEntity.builder()
                 .name("TestUser2")
                 .phoneNumber("765-4321")
                 .email("testMailUser2@email.com")
                 .password("secret")
-                .birthDate(LocalDate.of(2000,2,19)).build();
+                .birthDate(DEFAULT_BIRTH_DATE).build();
     }
-    public static UserEntity createUserWithId(Long id) {
+    public static UserEntity createUserEntityWithId(Long id) {
         return UserEntity.builder()
                 .id(id)
                 .name("TestUser")
                 .phoneNumber("123-4567")
                 .email("testMailUser@email.com")
                 .password("secret")
-                .birthDate(LocalDate.of(2001,4,15)).build();
+                .birthDate(DEFAULT_BIRTH_DATE).build();
     }
-    public static BookingEntity createTestBooking(){
-        return createTestBooking(99L, 42L, 1L);
+    public static BookingEntity createTestBookingEntity() {
+        return createTestBookingEntity( TEST_USER_ID, TEST_ARTIST_ID);
     }
-    public static BookingEntity createTestBooking(Long bookingId, Long userId, Long artistId) {
+    public static BookingEntity createTestBookingEntity(Long userId, Long artistId) {
         return BookingEntity.builder()
-                .id(bookingId)
-                .userEntity(createUserWithId(userId))
-                .artistEntity(createArtistWithId(artistId))
+                .userEntity(createUserEntityWithId(userId))
+                .artistEntity(createArtistEntityWithId(artistId))
                 .sessionType(SessionType.MEDIUM)
                 .startTime(DEFAULT_START_TIME)
                 .endTime(DEFAULT_END_TIME)
@@ -66,7 +72,54 @@ public class TestData {
                 .status(BookingStatus.PENDING)
                 .notes("Test notes")
                 .imagePath("/images/test.png")
-                .createdAt(LocalDateTime.of(2026,3,10,17,0))
-                .build();
+                .createdAt(DEFAULT_CREATED_TIME).build();
+    }
+    public static BookingEntity createTestBookingEntity(UserEntity user, ArtistEntity artist,
+                                                        SessionType type, LocalDateTime start) {
+        return BookingEntity.builder()
+                .userEntity(user)
+                .artistEntity(artist)
+                .sessionType(type)
+                .startTime(start)
+                .endTime(start.plusMinutes(type.getDurationMinutes()))
+                .endOfBufferTime(start.plusMinutes(type.getDurationMinutes())
+                        .plusMinutes(type.getBufferAfterMinutes()))
+                .status(BookingStatus.PENDING)
+                .notes("Test notes")
+                .imagePath("/images/test.png")
+                .createdAt(DEFAULT_CREATED_TIME).build();
+    }
+    public static Booking createTestBookingDomain() {
+        return Booking.builder()
+                .id(99L)
+                .userId(42L)
+                .artistId(1L)
+                .sessionType(SessionType.MEDIUM)
+                .startTime(DEFAULT_START_TIME)
+                .endTime(DEFAULT_END_TIME)
+                .endOfBufferTime(DEFAULT_END_OF_BUFFER_TIME)
+                .status(BookingStatus.PENDING)
+                .notes("Test notes")
+                .imagePath("/images/test.png")
+                .createdAt(DEFAULT_CREATED_TIME)
+                .updatedAt(DEFAULT_CREATED_TIME).build();
+    }
+    public static Artist createTestArtistDomain() {
+        return Artist.builder()
+                .id(TEST_ARTIST_ID)
+                .name("TestArtist")
+                .email("testMail@email.com")
+                .password("secret")
+                .createdAt(DEFAULT_CREATED_TIME).build();
+    }
+    public static User createTestUserDomain() {
+        return User.builder()
+                .id(TEST_USER_ID)
+                .name("TestUser")
+                .email("testMailUser@email.com")
+                .phoneNumber("123-4567")
+                .birthDate(DEFAULT_BIRTH_DATE)
+                .password("secret")
+                .createdAt(DEFAULT_CREATED_TIME).build();
     }
 }

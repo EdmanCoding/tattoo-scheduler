@@ -2,3 +2,6 @@
 INSERT INTO artists(id, name, email, password, created_at)
 VALUES (1, 'Nikita', 'nikita@test.com', 'secret', CURRENT_TIMESTAMP);
 
+INSERT INTO artists(id, name, email, password, created_at)
+VALUES (2, 'Vasya', 'vasay@test.com', 'secret', CURRENT_TIMESTAMP);
+

@@ -84,6 +84,20 @@
             <artifactId>spring-boot-starter-data-jpa-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Testcontainers: PostgreSQL container for integration tests with real database -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.20.4</version>
+            <scope>test</scope> <!-- Only for tests, not shipped with production code -->
+        </dependency>
+        <!-- Testcontainers JUnit 5 integration: enables @Testcontainers and @Container annotations -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.20.4</version>
+            <scope>test</scope> <!-- Only for tests -->
+        </dependency>
         <!-- For @AutoConfigureMockMvc -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

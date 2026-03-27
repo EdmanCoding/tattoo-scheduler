@@ -14,7 +14,7 @@ public class BookingResponseTest {
     @Test
     public void from_ShouldMapAllFieldsTest() {
         // Arrange
-        BookingEntity bookingEntity = createTestBooking();
+        BookingEntity bookingEntity = createTestBookingEntity();
         // Act
         BookingResponse response = BookingResponse.from(bookingEntity);
         // Assert

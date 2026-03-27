@@ -36,7 +36,7 @@ public class NikitaBookingPolicy implements BookingPolicy {
                 .plusMinutes(type.getBufferAfterMinutes());
         return existingBookings.stream().noneMatch(booking ->
                 start.isBefore(booking.getEndOfBufferTime()) &&
-                protectedEnd.isAfter(booking.getStartTime()));
+                        protectedEnd.isAfter(booking.getStartTime()));
     }
 
     @Override

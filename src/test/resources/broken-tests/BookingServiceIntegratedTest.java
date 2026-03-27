@@ -12,6 +12,7 @@ import com.tattoo.scheduler.repository.UserRepository;
 import static com.tattoo.scheduler.util.TestData.*;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 
+@Disabled("Keeping for reference — needs refactoring")
 @DataJpaTest
 @ActiveProfiles("test")
 @Sql(scripts = "/test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_CLASS)
