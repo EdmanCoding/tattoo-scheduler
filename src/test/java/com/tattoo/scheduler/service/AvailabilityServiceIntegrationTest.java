@@ -6,6 +6,7 @@ import com.tattoo.scheduler.model.UserEntity;
 import com.tattoo.scheduler.repository.ArtistRepository;
 import com.tattoo.scheduler.repository.BookingRepository;
 import com.tattoo.scheduler.repository.UserRepository;
+import com.tattoo.scheduler.service.exception.ArtistNotFoundException;
 import com.tattoo.scheduler.util.TestData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,14 +61,13 @@ public class AvailabilityServiceIntegrationTest {
 
     // working hours -> 10:00 - 20:00; default date -> 15.04.2026
     private final LocalDateTime dayStart = DEFAULT_START_TIME;
-    private final LocalDateTime dayEnd = DEFAULT_DAY_END_TIME;
     private final LocalDate date = DEFAULT_DATE;
 
     @BeforeEach
     void setUp() {
         // Use the artist already inserted by test-data.sql
-        artist = artistRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Test artist not found"));
+        artist = artistRepository.findById(TEST_ARTIST_ID)
+                .orElseThrow(() -> new ArtistNotFoundException(TEST_ARTIST_ID));
         // Insert user before each test
         user = userRepository.save(TestData.createTestUserEntity1());
     }

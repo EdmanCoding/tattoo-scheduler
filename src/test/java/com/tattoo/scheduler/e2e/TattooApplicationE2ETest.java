@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test-postgres")
-@Sql(scripts = "/test-data-e2e.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "/test-data-with-user.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class TattooApplicationE2ETest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")

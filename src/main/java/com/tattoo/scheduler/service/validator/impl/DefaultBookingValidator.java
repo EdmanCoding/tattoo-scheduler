@@ -52,8 +52,6 @@ public class DefaultBookingValidator implements BookingValidator {
 
         // 5. Fetch existing bookings for the day
         List<Booking> existing = bookingFetcher.getActiveBookingsForDay(booking.getArtistId(), date);
-        /* System.out.println("Found " + entities.size() + " entities for " + date);
-        entities.forEach(e -> System.out.println("  - " + e.getStartTime() + " " + e.getSessionType())); */
 
         // 6. LARGE exclusivity
         if (!policy.respectsLargeExclusivity(booking.getSessionType(), existing))

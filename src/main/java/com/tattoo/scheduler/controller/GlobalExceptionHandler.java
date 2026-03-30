@@ -3,13 +3,13 @@ package com.tattoo.scheduler.controller;
 import com.tattoo.scheduler.dto.ErrorResponse;
 import com.tattoo.scheduler.service.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -119,5 +119,48 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        String message = "Invalid request body.";
+        Throwable cause = ex.getCause();
+        if (cause != null) {
+            String causeMsg = cause.getMessage();
+            if (causeMsg != null) {
+                if (causeMsg.contains("Cannot deserialize value of type") &&
+                        causeMsg.contains("SessionType")) {
+                    message = "Invalid sessionType. Allowed values: SMALL_CONSULTATION, SMALL, LARGE_CONSULTATION, MEDIUM, LARGE";
+                } else if (causeMsg.contains("Failed to deserialize") &&
+                        causeMsg.contains("startTime")) {
+                    message = "Invalid date format. Please use ISO format: yyyy-MM-ddTHH:mm:ss";
+                }
+            }
+        }
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(message)
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.badRequest().body(error);
+    }
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingHeader(
+            MissingRequestHeaderException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message("Missing required header: " + ex.getHeaderName())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.badRequest().body(error);
     }
 }

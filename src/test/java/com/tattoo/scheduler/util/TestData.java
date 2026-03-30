@@ -3,6 +3,7 @@ package com.tattoo.scheduler.util;
 import com.tattoo.scheduler.domain.Artist;
 import com.tattoo.scheduler.domain.Booking;
 import com.tattoo.scheduler.domain.User;
+import com.tattoo.scheduler.mapper.BookingMapper;
 import com.tattoo.scheduler.model.*;
 
 import java.time.LocalDate;
@@ -20,7 +21,9 @@ public class TestData {
 
     public static final Long TEST_USER_ID = 1L;
     public static final Long TEST_ARTIST_ID = 1L;
+    public static final Long TEST_BOOKING_ID = 1L;
     public static final Long TEST_NONEXISTING_USER_ID = 658L;
+    public static final Long TEST_NONEXISTING_ARTIST_ID = 658L;
 
     public static ArtistEntity createTestArtistEntity() {
         return ArtistEntity.builder()
@@ -85,9 +88,34 @@ public class TestData {
                 .endOfBufferTime(start.plusMinutes(type.getDurationMinutes())
                         .plusMinutes(type.getBufferAfterMinutes()))
                 .status(BookingStatus.PENDING)
-                .notes("Test notes")
-                .imagePath("/images/test.png")
-                .createdAt(DEFAULT_CREATED_TIME).build();
+                .createdAt(DEFAULT_CREATED_TIME)
+                .updatedAt(DEFAULT_CREATED_TIME).build();
+    }
+    public static Booking createTestBookingDomain(Long userId, Long artistId,
+                                                  SessionType type, LocalDateTime start) {
+        return Booking.builder()
+                .userId(userId)
+                .artistId(artistId)
+                .sessionType(type)
+                .startTime(start)
+                .endTime(start.plusMinutes(type.getDurationMinutes()))
+                .endOfBufferTime(start.plusMinutes(type.getDurationMinutes())
+                        .plusMinutes(type.getBufferAfterMinutes()))
+                .status(BookingStatus.PENDING)
+                .build();
+    }
+    public static Booking createTestBookingDomain(UserEntity user, ArtistEntity artist,
+                                                  SessionType type, LocalDateTime start) {
+        return Booking.builder()
+                .userId(user.getId())
+                .artistId(artist.getId())
+                .sessionType(type)
+                .startTime(start)
+                .endTime(start.plusMinutes(type.getDurationMinutes()))
+                .endOfBufferTime(start.plusMinutes(type.getDurationMinutes())
+                        .plusMinutes(type.getBufferAfterMinutes()))
+                .status(BookingStatus.PENDING)
+                .build();
     }
     public static Booking createTestBookingDomain() {
         return Booking.builder()
