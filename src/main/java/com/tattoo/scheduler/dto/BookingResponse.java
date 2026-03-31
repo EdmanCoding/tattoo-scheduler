@@ -1,6 +1,5 @@
 package com.tattoo.scheduler.dto;
 
-import com.tattoo.scheduler.model.BookingEntity;
 import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.model.SessionType;
 
@@ -17,20 +16,5 @@ public record BookingResponse(
         BookingStatus status,
         String notes,
         String imagePath,
-        LocalDateTime createdAt ) {
-        // Static factory method to create from entity
-        public static BookingResponse from(BookingEntity bookingEntity) {
-                return new BookingResponse(
-                        bookingEntity.getId(),
-                        bookingEntity.getUserEntity().getId(),
-                        bookingEntity.getArtistEntity().getId(),
-                        bookingEntity.getSessionType(),
-                        bookingEntity.getStartTime(),
-                        bookingEntity.getEndTime(),
-                        bookingEntity.getEndOfBufferTime(),
-                        bookingEntity.getStatus(),
-                        bookingEntity.getNotes(),
-                        bookingEntity.getImagePath(),
-                        bookingEntity.getCreatedAt());
-        }
-}
+        LocalDateTime createdAt
+){}

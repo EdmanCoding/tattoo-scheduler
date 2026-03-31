@@ -1,8 +1,10 @@
 package com.tattoo.scheduler.service;
 
-import com.github.dockerjava.api.exception.ConflictException;
 import com.tattoo.scheduler.domain.Booking;
-import com.tattoo.scheduler.model.*;
+import com.tattoo.scheduler.model.ArtistEntity;
+import com.tattoo.scheduler.model.BookingEntity;
+import com.tattoo.scheduler.model.BookingStatus;
+import com.tattoo.scheduler.model.UserEntity;
 import com.tattoo.scheduler.repository.ArtistRepository;
 import com.tattoo.scheduler.repository.BookingRepository;
 import com.tattoo.scheduler.repository.UserRepository;
