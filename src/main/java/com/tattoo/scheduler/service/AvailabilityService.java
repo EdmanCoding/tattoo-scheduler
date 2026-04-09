@@ -1,13 +1,7 @@
 package com.tattoo.scheduler.service;
 
-import com.tattoo.scheduler.domain.Artist;
 import com.tattoo.scheduler.domain.Booking;
-import com.tattoo.scheduler.mapper.BookingMapper;
-import com.tattoo.scheduler.model.ArtistEntity;
-import com.tattoo.scheduler.model.BookingEntity;
-import com.tattoo.scheduler.model.BookingStatus;
 import com.tattoo.scheduler.model.SessionType;
-import com.tattoo.scheduler.repository.BookingRepository;
 import com.tattoo.scheduler.service.fetcher.BookingFetcher;
 import com.tattoo.scheduler.service.policy.BookingPolicy;
 import com.tattoo.scheduler.service.resolver.ArtistResolver;

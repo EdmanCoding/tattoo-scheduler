@@ -4,6 +4,7 @@ import com.tattoo.scheduler.dto.BookingResponse;
 import com.tattoo.scheduler.dto.CreateBookingRequest;
 import com.tattoo.scheduler.model.SessionType;
 import com.tattoo.scheduler.repository.BookingRepository;
+import com.tattoo.scheduler.util.TestJwtGenerator;
 import com.tattoo.scheduler.util.TestRequestFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,9 @@ public class TattooApplicationE2ETest {
 
     @Autowired
     private BookingRepository bookingRepository;
+    @Autowired
+    private TestJwtGenerator jwtGenerator;
+    private String validToken;
 
     @LocalServerPort
     private int port;
@@ -58,6 +62,7 @@ public class TattooApplicationE2ETest {
         client = RestTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
+        validToken = jwtGenerator.generateValidToken("testuser@example.com");
     }
     @BeforeEach
     void clearDatabase() {
@@ -88,7 +93,7 @@ public class TattooApplicationE2ETest {
 
         BookingResponse booking = client.post()
                 .uri("/api/bookings")
-                .header("X-User-Id", TEST_USER_ID.toString())
+                .header("Authorization", "Bearer " + validToken)
                 .body(bookingRequest)
                 .exchange()
                 .expectStatus().isCreated()
@@ -113,7 +118,7 @@ public class TattooApplicationE2ETest {
         // 4. Try to book the same slot again
         client.post()
                 .uri("/api/bookings")
-                .header("X-User-Id", TEST_USER_ID.toString())
+                .header("Authorization", "Bearer " + validToken)
                 .body(bookingRequest)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT);

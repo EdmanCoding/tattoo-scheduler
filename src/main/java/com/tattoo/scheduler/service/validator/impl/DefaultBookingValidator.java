@@ -32,33 +32,29 @@ public class DefaultBookingValidator implements BookingValidator {
     }
 
     public void validate(Booking booking) {
-        // 1. User exists?
-        if (!userRepository.existsById(booking.getUserId()))
-            throw new UserNotFoundException(booking.getUserId());
-
-        // 2. Artist exists?
+        // 1. Artist exists?
         if (!artistRepository.existsById(booking.getArtistId()))
             throw new ArtistNotFoundException(booking.getArtistId());
 
-        // 3. Date allowed?
+        // 2. Date allowed?
         LocalDateTime start = booking.getStartTime();
         LocalDate date = start.toLocalDate();
         if (!policy.isDateAllowed(date))
             throw new BookingDateNotAllowedException(date);
 
-        // 4. Within working hours?
+        // 3. Within working hours?
         if (!policy.isWithinWorkingHours(start, booking.getSessionType()))
             throw new BookingOutsideWorkingHoursException(start);
 
-        // 5. Fetch existing bookings for the day
+        // 4. Fetch existing bookings for the day
         List<Booking> existing = bookingFetcher.getActiveBookingsForDay(booking.getArtistId(), date);
 
-        // 6. LARGE exclusivity
+        // 5. LARGE exclusivity
         if (!policy.respectsLargeExclusivity(booking.getSessionType(), existing))
             throw new BookingConflictException(booking.getArtistId(), start,
                     "LARGE session rules violated");
 
-        // 7. Conflict with existing bookings
+        // 6. Conflict with existing bookings
         if (!policy.hasNoConflict(start, booking.getSessionType(), existing))
             throw new BookingConflictException(booking.getArtistId(), start);
     }

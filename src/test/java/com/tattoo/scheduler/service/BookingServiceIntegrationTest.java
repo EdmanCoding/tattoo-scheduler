@@ -117,19 +117,6 @@ public class BookingServiceIntegrationTest {
                 .hasMessageContaining("Cannot book at");
     }
     @Test
-    void shouldThrowException_whenUserNotFound(){
-        // Arrange
-        Booking request = Booking.builder()
-                .sessionType(MEDIUM)
-                .startTime(DEFAULT_START_TIME)
-                .userId(TEST_NONEXISTING_USER_ID)
-                .artistId(TEST_ARTIST_ID).build();
-        // Act and Assert
-        assertThatThrownBy(()-> bookingService.createBooking(request))
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessage("User with id " + TEST_NONEXISTING_USER_ID + " not found");
-    }
-    @Test
     void shouldThrowException_whenArtistNotFound(){
         // Arrange
         Booking request = Booking.builder()

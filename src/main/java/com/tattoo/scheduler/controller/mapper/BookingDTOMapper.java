@@ -8,15 +8,13 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface BookingDTOMapper {
-    @Mapping(target = "userId", ignore = true)
-    @Mapping(target = "artistId", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "endTime", ignore = true)
     @Mapping(target = "endOfBufferTime", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    Booking toDomain(CreateBookingRequest request);
+    Booking toDomain(CreateBookingRequest request, Long userId, Long artistId);
 
     BookingResponse toResponse(Booking booking);
 }

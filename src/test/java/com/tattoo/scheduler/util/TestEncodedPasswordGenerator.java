@@ -1,10 +1,10 @@
-package com.tattoo.scheduler.service.policy;
+package com.tattoo.scheduler.util;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-public class Temp {
+public class TestEncodedPasswordGenerator {
     @Test
     void printHashedPasswords() {
         PasswordEncoder encoder = new BCryptPasswordEncoder();

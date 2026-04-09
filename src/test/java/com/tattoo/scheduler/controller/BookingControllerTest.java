@@ -6,8 +6,13 @@ import com.tattoo.scheduler.dto.BookingResponse;
 import com.tattoo.scheduler.dto.CreateBookingRequest;
 import com.tattoo.scheduler.model.SessionType;
 import com.tattoo.scheduler.service.BookingService;
-import com.tattoo.scheduler.service.exception.*;
+import com.tattoo.scheduler.service.exception.ArtistNotFoundException;
+import com.tattoo.scheduler.service.exception.BookingConflictException;
+import com.tattoo.scheduler.service.exception.BookingDateNotAllowedException;
+import com.tattoo.scheduler.service.exception.BookingOutsideWorkingHoursException;
+import com.tattoo.scheduler.util.TestJwtGenerator;
 import com.tattoo.scheduler.util.TestResponseFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -19,11 +24,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static com.tattoo.scheduler.util.TestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,10 +41,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test-h2")
 @ExtendWith(MockitoExtension.class)
+@Sql(scripts = "/test-data-with-user.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class BookingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private TestJwtGenerator jwtGenerator;
+    private String validToken;
 
     @MockitoBean
     private BookingService bookingService;
@@ -46,13 +58,19 @@ class BookingControllerTest {
     private BookingDTOMapper bookingDTOMapper;
 
     @Captor
-    private ArgumentCaptor<Booking> bookingCaptor;
-    @Captor
     private ArgumentCaptor<CreateBookingRequest> requestCaptor;
+    @Captor
+    private ArgumentCaptor<Long> userIdCaptor;
+    @Captor
+    private ArgumentCaptor<Long> artistIdCaptor;
+
+    @BeforeEach
+    void setUp() {
+        validToken = jwtGenerator.generateValidToken("testuser@example.com");
+    }
 
     @Test
     void createBooking_shouldMapAndSetIdsCorrectly_whenHappyPath() throws Exception {
-        // Given
         String requestBody = """
                 {
                     "sessionType": "MEDIUM",
@@ -64,53 +82,77 @@ class BookingControllerTest {
         Booking savedBooking = new Booking();  // the object returned by the service
         BookingResponse response = TestResponseFactory.response().withNotes("Test").build();
 
-        when(bookingDTOMapper.toDomain(any())).thenReturn(mappedBooking);
+        when(bookingDTOMapper.toDomain(any(CreateBookingRequest.class), anyLong(), any()))
+                .thenReturn(mappedBooking);
         when(bookingService.createBooking(any())).thenReturn(savedBooking);
         when(bookingDTOMapper.toResponse(savedBooking)).thenReturn(response);
 
-        // When
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", "1")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.sessionType").value("MEDIUM"))
                 .andExpect(jsonPath("$.startTime").value("2026-04-15T10:00:00"))
                 .andExpect(jsonPath("$.notes").value("Test"))
-                .andExpect(jsonPath("$.userId").value("1"))
-                .andExpect(jsonPath("$.artistId").value("1"))
+                .andExpect(jsonPath("$.userId").value(TEST_USER_ID))
+                .andExpect(jsonPath("$.artistId").value(TEST_ARTIST_ID))
                 .andExpect(jsonPath("$.status").value("PENDING"));
 
-        // Then
-        verify(bookingDTOMapper).toDomain(requestCaptor.capture());
+        verify(bookingDTOMapper).toDomain(requestCaptor.capture(),
+                userIdCaptor.capture(), artistIdCaptor.capture());
         assertThat(requestCaptor.getValue().sessionType()).isEqualTo(SessionType.MEDIUM);
         assertThat(requestCaptor.getValue().startTime()).isEqualTo(DEFAULT_START_TIME);
         assertThat(requestCaptor.getValue().notes()).isEqualTo("Test");
-
-        verify(bookingService).createBooking(bookingCaptor.capture());
-        Booking passedBooking = bookingCaptor.getValue();
-        assertThat(passedBooking.getUserId()).isEqualTo(TEST_USER_ID);
-        assertThat(passedBooking.getArtistId()).isNull();
+        assertThat(requestCaptor.getValue().imagePath()).isNull();
+        assertThat(userIdCaptor.getValue()).isEqualTo(TEST_USER_ID);
+        assertThat(artistIdCaptor.getValue()).isNull();
     }
     @Test
-    void createBooking_shouldReturn404_whenUserNotFound() throws Exception {
+    void createBooking_shouldPassArtistId_whenProvided() throws Exception {
+        Long providedArtistId = 2L;
+        String requestBody = """
+                {
+                    "sessionType": "MEDIUM",
+                    "startTime": "2026-04-15T10:00"
+                }
+                """;
+        Booking mappedBooking = new Booking();
+        Booking savedBooking = new Booking();
+        BookingResponse response = TestResponseFactory.response().withNotes("Test").build();
+
+        when(bookingDTOMapper.toDomain(any(CreateBookingRequest.class), anyLong(), any()))
+                .thenReturn(mappedBooking);
+        when(bookingService.createBooking(any())).thenReturn(savedBooking);
+        when(bookingDTOMapper.toResponse(savedBooking)).thenReturn(response);
+
+        mockMvc.perform(post("/api/bookings?artistId=" + providedArtistId)
+                        .header("Authorization", "Bearer " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isCreated());
+
+        verify(bookingDTOMapper).toDomain(requestCaptor.capture(),
+                userIdCaptor.capture(), artistIdCaptor.capture());
+        assertThat(artistIdCaptor.getValue()).isEqualTo(providedArtistId);
+    }
+    @Test
+    void jwtFilter_shouldReturn401_whenTokenForNonExistentUser() throws Exception {
+        String tokenForGhost = jwtGenerator.generateTokenForNonExistentUser();
+
         String requestBody = """
             {
                 "sessionType": "MEDIUM",
                 "startTime": "2026-04-15T10:00"
             }
             """;
-        Booking mappedBooking = new Booking();
-        when(bookingDTOMapper.toDomain(any())).thenReturn(mappedBooking);
-        when(bookingService.createBooking(any()))
-                .thenThrow(new UserNotFoundException(TEST_NONEXISTING_USER_ID));
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", "658")
+                        .header("Authorization", "Bearer " + tokenForGhost)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("User with id 658 not found"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid token"));
     }
     @Test
     void createBooking_shouldReturn404_whenArtistNotFound() throws Exception {
@@ -121,12 +163,13 @@ class BookingControllerTest {
             }
             """;
         Booking mappedBooking = new Booking();
-        when(bookingDTOMapper.toDomain(any())).thenReturn(mappedBooking);
+        when(bookingDTOMapper.toDomain(any(CreateBookingRequest.class), anyLong(), any()))
+                .thenReturn(mappedBooking);
         when(bookingService.createBooking(any()))
                 .thenThrow(new ArtistNotFoundException(TEST_NONEXISTING_ARTIST_ID));
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", "1")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isNotFound())
@@ -141,12 +184,13 @@ class BookingControllerTest {
             }
             """;
         Booking mappedBooking = new Booking();
-        when(bookingDTOMapper.toDomain(any())).thenReturn(mappedBooking);
+        when(bookingDTOMapper.toDomain(any(CreateBookingRequest.class), anyLong(), any()))
+                .thenReturn(mappedBooking);
         when(bookingService.createBooking(any()))
                 .thenThrow(new BookingConflictException(TEST_ARTIST_ID, DEFAULT_START_TIME));
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", "1")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isConflict())
@@ -162,13 +206,14 @@ class BookingControllerTest {
             }
             """;
         Booking mappedBooking = new Booking();
-        when(bookingDTOMapper.toDomain(any())).thenReturn(mappedBooking);
+        when(bookingDTOMapper.toDomain(any(CreateBookingRequest.class), anyLong(), any()))
+                .thenReturn(mappedBooking);
         when(bookingService.createBooking(any()))
                 .thenThrow(new BookingDateNotAllowedException(
                         DEFAULT_START_TIME.minusMonths(2).toLocalDate()));
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", "1")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
@@ -185,13 +230,14 @@ class BookingControllerTest {
             }
             """;
         Booking mappedBooking = new Booking();
-        when(bookingDTOMapper.toDomain(any())).thenReturn(mappedBooking);
+        when(bookingDTOMapper.toDomain(any(CreateBookingRequest.class), anyLong(), any()))
+                .thenReturn(mappedBooking);
         when(bookingService.createBooking(any()))
                 .thenThrow(new BookingOutsideWorkingHoursException(
                         DEFAULT_START_TIME.minusHours(3)));
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", "1")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
@@ -208,7 +254,7 @@ class BookingControllerTest {
                 """;
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", String.valueOf(1L))
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
@@ -224,7 +270,7 @@ class BookingControllerTest {
                 """;
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", String.valueOf(1L))
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
@@ -241,7 +287,7 @@ class BookingControllerTest {
                 """;
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", 1L)
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
@@ -259,7 +305,7 @@ class BookingControllerTest {
                 """;
 
         mockMvc.perform(post("/api/bookings")
-                        .header("X-User-Id", 1L)
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
@@ -269,7 +315,7 @@ class BookingControllerTest {
     }
 
     @Test
-    void createBooking_shouldReturn400_whenUserIdHeaderMissing() throws Exception {
+    void jwtFilter_shouldReturn401_whenHeaderMissing() throws Exception {
         String requestBody = """
                 {
                     "sessionType": "SMALL",
@@ -280,7 +326,60 @@ class BookingControllerTest {
         mockMvc.perform(post("/api/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Missing required header: X-User-Id"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid token"));
+    }
+    @Test
+    void jwtFilter_shouldReturn401_whenInvalidHeaderFormat() throws Exception {
+
+        String requestBody = """
+            {
+                "sessionType": "MEDIUM",
+                "startTime": "2026-04-15T10:00"
+            }
+            """;
+
+        mockMvc.perform(post("/api/bookings")
+                        .header("Authorization", "Bear " + validToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid token"));
+    }
+    @Test
+    void jwtFilter_shouldReturn401_whenInvalidTokenStructure() throws Exception {
+        String malformedToken = jwtGenerator.generateMalformedToken();
+
+        String requestBody = """
+            {
+                "sessionType": "MEDIUM",
+                "startTime": "2026-04-15T10:00"
+            }
+            """;
+
+        mockMvc.perform(post("/api/bookings")
+                        .header("Authorization", "Bearer " + malformedToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid token"));
+    }
+    @Test
+    void jwtFilter_shouldReturn401_whenTokenExpired() throws Exception {
+        String expiredToken = jwtGenerator.generateExpiredToken("testuser@example.com");
+
+        String requestBody = """
+            {
+                "sessionType": "MEDIUM",
+                "startTime": "2026-04-15T10:00"
+            }
+            """;
+
+        mockMvc.perform(post("/api/bookings")
+                        .header("Authorization", "Bearer " + expiredToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid token"));
     }
 }

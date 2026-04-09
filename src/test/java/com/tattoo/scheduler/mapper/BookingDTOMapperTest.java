@@ -10,7 +10,7 @@ import com.tattoo.scheduler.util.TestRequestFactory;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import static com.tattoo.scheduler.util.TestData.DEFAULT_START_TIME;
+import static com.tattoo.scheduler.util.TestData.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class BookingDTOMapperTest {
@@ -24,18 +24,19 @@ public class BookingDTOMapperTest {
                 .at(DEFAULT_START_TIME)
                 .withNotes("Test notes")
                 .withImage("image/test.png").build();
+        Long userId = TEST_USER_ID;
+        Long artistId = TEST_ARTIST_ID;
         // Act
-        Booking domain = bookingDTOMapper.toDomain(request);
+        Booking domain = bookingDTOMapper.toDomain(request, userId, artistId);
         // Arrange
         assertThat(domain).isNotNull();
         assertThat(domain.getSessionType()).isEqualTo(request.sessionType());
         assertThat(domain.getStartTime()).isEqualTo(request.startTime());
         assertThat(domain.getNotes()).isEqualTo(request.notes());
         assertThat(domain.getImagePath()).isEqualTo(request.imagePath());
+        assertThat(domain.getUserId()).isEqualTo(userId);
+        assertThat(domain.getArtistId()).isEqualTo(artistId);
         // Fields that should be ignored:
-        assertThat(domain.getId()).isNull();
-        assertThat(domain.getUserId()).isNull();
-        assertThat(domain.getArtistId()).isNull();
         assertThat(domain.getEndTime()).isNull();
         assertThat(domain.getEndOfBufferTime()).isNull();
         assertThat(domain.getStatus()).isNull();
