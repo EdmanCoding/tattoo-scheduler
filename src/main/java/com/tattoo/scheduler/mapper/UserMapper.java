@@ -9,6 +9,6 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
     @Mapping(target = "bookingEntities", ignore = true)
-    UserEntity ToEntity(User user);
+    UserEntity toEntity(User user);
     User toDomain(UserEntity user);
 }

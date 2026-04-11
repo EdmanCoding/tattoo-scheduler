@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test-postgres")
 @Transactional
-@Sql(scripts = "/test-data-with-user.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "/test-data-postgre.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class BookingServiceIntegrationTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
@@ -63,10 +63,10 @@ public class BookingServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Use the artist already inserted by test-data.sql
+        // Use the artist already inserted by test-data-h2.sql
         artist = artistRepository.findById(TEST_ARTIST_ID)
                 .orElseThrow(() -> new ArtistNotFoundException(TEST_ARTIST_ID));
-        // Use the user already inserted by test-data.sql
+        // Use the user already inserted by test-data-h2.sql
         user = userRepository.findById(TEST_USER_ID)
                 .orElseThrow(() -> new UserNotFoundException(TEST_USER_ID));
     }

@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test-postgres")
 @Transactional
-@Sql(scripts = "/test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "/test-data-postgre.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class AvailabilityServiceIntegrationTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
@@ -65,7 +65,7 @@ public class AvailabilityServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Use the artist already inserted by test-data.sql
+        // Use the artist already inserted by test-data-h2.sql
         artist = artistRepository.findById(TEST_ARTIST_ID)
                 .orElseThrow(() -> new ArtistNotFoundException(TEST_ARTIST_ID));
         // Insert user before each test

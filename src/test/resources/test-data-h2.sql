@@ -14,3 +14,7 @@ INSERT INTO users(id, name, email, phone_number, birth_date, password, created_a
 SELECT 1, 'Test User', 'testuser@example.com', '+123456789', '2000-01-01',
        '$2a$10$kg5iPXsEwbFBq/fBtlRm5uWqBoQx4h4YYvjGCDRr1pTAsOGiErseS', CURRENT_TIMESTAMP
     WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 1);
+
+-- Reset identity columns
+ALTER TABLE users ALTER COLUMN id RESTART WITH 100;
+ALTER TABLE artists ALTER COLUMN id RESTART WITH 100;

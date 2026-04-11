@@ -12,3 +12,6 @@ INSERT INTO artists(id, name, email, password, created_at)
 SELECT 1, 'Nikita', 'tattooArtist@email.com',
        '$2a$10$kg5iPXsEwbFBq/fBtlRm5uWqBoQx4h4YYvjGCDRr1pTAsOGiErseS', CURRENT_TIMESTAMP
     WHERE NOT EXISTS (SELECT 1 FROM artists WHERE id = 1);
+
+-- Reset the sequence
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));

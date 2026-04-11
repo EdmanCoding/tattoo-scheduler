@@ -32,7 +32,7 @@ public class UserMapperTest {
         // Arrange
         User domain = TestData.createTestUserDomain();
         // Act
-        UserEntity entity = mapper.ToEntity(domain);
+        UserEntity entity = mapper.toEntity(domain);
         // Assert
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isEqualTo(domain.getId());

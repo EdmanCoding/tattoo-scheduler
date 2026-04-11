@@ -13,8 +13,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = AgeValidatorImpl.class)
 public @interface AgeValidator {
-    String message() default "You must be at least 18 years old";
+    String message() default "Age requirement not met";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    int min() default 18;
+    int min() default 0;
 }

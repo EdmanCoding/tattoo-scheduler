@@ -1,12 +1,17 @@
 package com.tattoo.scheduler.controller;
 
-import com.tattoo.scheduler.dto.AuthResponse;
-import com.tattoo.scheduler.dto.LoginRequest;
+import com.tattoo.scheduler.domain.User;
+import com.tattoo.scheduler.dto.auth.AuthResponse;
+import com.tattoo.scheduler.dto.auth.LoginRequest;
+import com.tattoo.scheduler.dto.auth.RegisterRequest;
+import com.tattoo.scheduler.dto.auth.RegisterResponse;
 import com.tattoo.scheduler.model.UserEntity;
 import com.tattoo.scheduler.repository.UserRepository;
+import com.tattoo.scheduler.service.UserService;
 import com.tattoo.scheduler.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,23 +25,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
     private final JwtUtil jwtUtil;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request){
-        // 1. Find user by email
-        UserEntity user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
-        // 2. Check password (BCrypt)
-        if(!passwordEncoder.matches(request.password(), user.getPassword())){
-            throw new UsernameNotFoundException("Invalid credentials");
-        }
-        // 3. Generate JWT
+        User user = userService.authenticate(request.email(), request.password());
         String token = jwtUtil.generateToken(user.getEmail());
-
-        // 4. Return token
         return ResponseEntity.ok(new AuthResponse(token, user.getEmail()));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request){
+        User user = userService.registerUser(request);
+        String token = jwtUtil.generateToken(user.getEmail());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new RegisterResponse(token, user.getId(), user.getEmail(), user.getName()));
     }
 }

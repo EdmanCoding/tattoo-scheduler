@@ -41,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test-h2")
 @ExtendWith(MockitoExtension.class)
-@Sql(scripts = "/test-data-with-user.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "/test-data-h2.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class BookingControllerTest {
 
     @Autowired

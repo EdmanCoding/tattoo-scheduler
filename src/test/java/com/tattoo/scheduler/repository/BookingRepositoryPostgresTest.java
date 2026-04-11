@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE) // No web layer for repository tests
 @ActiveProfiles("test-postgres")
 @Transactional      // Rolls back each test to keep the database clean
-@Sql(scripts = "/test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "/test-data-postgre.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class BookingRepositoryPostgresTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
@@ -53,7 +53,7 @@ public class BookingRepositoryPostgresTest {
 
     @BeforeEach
     void setUp() {
-        // Use the artist already inserted by test-data.sql
+        // Use the artist already inserted by test-data-h2.sql
         artist = artistRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Test artist not found"));
         // Insert user before each test

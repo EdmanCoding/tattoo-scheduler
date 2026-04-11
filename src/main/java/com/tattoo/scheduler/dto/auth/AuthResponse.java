@@ -1,4 +1,4 @@
-package com.tattoo.scheduler.dto;
+package com.tattoo.scheduler.dto.auth;
 
 public record AuthResponse(
         String token,
