@@ -23,8 +23,8 @@ Designed with layered architecture and tested with unit, integration and end-to-
 
 - User registration and authentication (JWT) 
 - Create and manage bookings 
-- Avalability calculation based on working hours, 
-session types and artist's rest/maintanence time buffer 
+- Availability calculation based on working hours, 
+session types and artist's rest/maintenance time buffer 
 - Validation (including custom age validation) 
 - Global exception handling 
 - Unit, integration and end-to-end testing 
@@ -42,7 +42,7 @@ session types and artist's rest/maintanence time buffer
 - Testcontainers 
 - JUnit 5 / AssertJ / Mockito / MockMvs 
 
-## Achitecture 
+## Architecture 
 
 Controller → Service → Repository 
 - Controllers handle HTTP requests 
@@ -59,6 +59,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 -H "Content-Type:application/json" \
 -d '{"name":"Vasya","email":"vasya_huligan228@gmail.com", \
 "password":"qwerty12345","phoneNumber":"88005553535","birthDate":"2000-02-02"}'
+```
 
 ### Login
 
@@ -66,11 +67,13 @@ curl -X POST http://localhost:8080/api/auth/register \
 curl -X POST http://localhost:8080/api/auth/login \
 -H "Content-Type:application/json" \
 -d '{"email":"vasya_huligan228@gmail.com","password":"qwerty12345"}'
+```
 
 ### Get available session slots for desired date
 
 ```bash
 curl -X GET "http://localhost:8080/api/availability?date=2026-05-15&sessionType=MEDIUM"
+```
 
 ### Create booking
 
@@ -83,6 +86,7 @@ curl -X POST http://localhost:8080/api/bookings \
     "startTime": "2026-05-15T10:00:00",
     "notes": "First tattoo"
   }'
+```
 
 ## How to run 
 
@@ -90,10 +94,12 @@ curl -X POST http://localhost:8080/api/bookings \
 2. Start PostgreSQL:
 ```bash
 docker-compose up -d
+```
 3. Start application:
 ```bash 
 docker-compose up -d 
 ./mvnw spring-boot:run 
+```
 4. Use provided curl examples 
 
 ## What I learned 
