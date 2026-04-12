@@ -34,14 +34,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test-postgres")
+@ActiveProfiles("test-postgre")
 @Sql(scripts = "/test-data-postgre.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class TattooApplicationE2ETest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
             .withDatabaseName("testdb")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withReuse(true);
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
@@ -63,28 +64,30 @@ public class TattooApplicationE2ETest {
 
     @BeforeEach
     void setUp() {
-        // Simple, modern, and uses your application's Jackson 3 configuration
         client = RestTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
         validToken = jwtGenerator.generateValidToken("testuser@example.com");
     }
+
     @BeforeEach
     void clearDatabase() {
-        // Delete all bookings (the only mutable data in our E2E tests)
         bookingRepository.deleteAll();
-        // If you later create other entities (e.g., users) in a test, delete them here too.
     }
 
     @Test
     void endToEnd_slotShouldDisappear_WhenBookingCreated() {
+        // Verifies that after creating a booking, the slot is no longer available
+        // and cannot be booked again.
+
         // 1. Check available slots for a given day and session type
         List<LocalDateTime> slots = client.get()
                 .uri("/api/availability?date={date}&sessionType={type}",
                         DEFAULT_DATE, SessionType.MEDIUM)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<List<LocalDateTime>>() {})
+                .expectBody(new ParameterizedTypeReference<List<LocalDateTime>>() {
+                })
                 .returnResult()
                 .getResponseBody();
         assertThat(slots).containsExactly(DEFAULT_START_TIME, DEFAULT_START_TIME.plusHours(6));
@@ -114,7 +117,8 @@ public class TattooApplicationE2ETest {
                         DEFAULT_DATE, SessionType.MEDIUM)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(new ParameterizedTypeReference<List<LocalDateTime>>() {})
+                .expectBody(new ParameterizedTypeReference<List<LocalDateTime>>() {
+                })
                 .returnResult()
                 .getResponseBody();
 
@@ -128,12 +132,15 @@ public class TattooApplicationE2ETest {
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT);
     }
+
     @Test
     void endToEnd_duplicateEmailPreventsSecondRegistration() {
+        // Ensures email uniqueness: first registration works, duplicate fails with 409.
+
         // 1. Register first user
         RegisterRequest request1 = new RegisterRequest(
                 "Vasya", "vasya_huligan228@gmail.com", "qwerty123",
-                "+7 968 433 92 80", LocalDate.of(2002,2,22)
+                "+88005553535", LocalDate.of(2002, 2, 22)
         );
 
         RegisterResponse response1 = client.post()

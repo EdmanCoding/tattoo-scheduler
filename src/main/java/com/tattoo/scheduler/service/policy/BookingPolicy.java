@@ -8,14 +8,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingPolicy {
-    /**
-     * Returns true if a booking can be made on the given date.
-     */
+    /** Returns true if a booking can be made on the given date. */
     boolean isDateAllowed(LocalDate date);
 
-    /**
-     * Returns true if a session starting at the given time respects working hours.
-     */
+    /** Returns true if a session starting at the given time respects working hours. */
     boolean isWithinWorkingHours(LocalDateTime start, SessionType type);
 
     /**

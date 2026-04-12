@@ -33,32 +33,11 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String extractEmail(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-    }
-
     public Claims extractAndValidate(String token) throws JwtException {
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
-                    .verifyWith(key)            // Set the key for verification
-                    .build()                    // Build the parser (immutable)
-                    .parseSignedClaims(token);  // ← VALIDATES + parses
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

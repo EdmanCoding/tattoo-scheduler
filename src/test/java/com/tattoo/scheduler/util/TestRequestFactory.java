@@ -9,9 +9,11 @@ import static com.tattoo.scheduler.util.TestData.DEFAULT_START_TIME;
 
 public class TestRequestFactory {
 
-    public static RequestBuilder request() { return new RequestBuilder(); }
+    public static RequestBuilder request() {
+        return new RequestBuilder();
+    }
 
-    public static class RequestBuilder{
+    public static class RequestBuilder {
         private SessionType type = SessionType.MEDIUM;
         private LocalDateTime startTime = DEFAULT_START_TIME;
         private String notes;
@@ -21,19 +23,23 @@ public class TestRequestFactory {
             this.type = type;
             return this;
         }
+
         public RequestBuilder at(LocalDateTime startTime) {
             this.startTime = startTime;
             return this;
         }
+
         public RequestBuilder withNotes(String notes) {
             this.notes = notes;
             return this;
         }
+
         public RequestBuilder withImage(String imagePath) {
             this.imagePath = imagePath;
             return this;
         }
-        public CreateBookingRequest build(){
+
+        public CreateBookingRequest build() {
             return new CreateBookingRequest(type, startTime, notes, imagePath);
         }
     }

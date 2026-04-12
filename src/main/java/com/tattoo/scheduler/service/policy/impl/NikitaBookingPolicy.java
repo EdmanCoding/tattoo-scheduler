@@ -15,16 +15,14 @@ import static com.tattoo.scheduler.service.constants.BookingConstants.WORK_START
 @Component
 public class NikitaBookingPolicy implements BookingPolicy {
     @Override
-    public boolean isDateAllowed (LocalDate date) {
-        // Can only book from tomorrow onwards
+    public boolean isDateAllowed(LocalDate date) {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         return !date.isBefore(tomorrow);
     }
 
     @Override
-    public boolean isWithinWorkingHours (LocalDateTime start, SessionType type){
+    public boolean isWithinWorkingHours(LocalDateTime start, SessionType type) {
         LocalDateTime end = start.plusMinutes(type.getDurationMinutes());
-        // Must start at or after WORK_START_HOUR, and end by WORK_END_HOUR on the same day
         return start.getHour() >= WORK_START_HOUR &&
                 (end.getHour() < WORK_END_HOUR || (end.getHour() == WORK_END_HOUR && end.getMinute() == 0))
                 && end.toLocalDate().equals(start.toLocalDate());
@@ -41,8 +39,7 @@ public class NikitaBookingPolicy implements BookingPolicy {
 
     @Override
     public boolean respectsLargeExclusivity(SessionType newType, List<Booking> existingBookings) {
-        if (newType == SessionType.LARGE){
-            // If we are booking a LARGE, there must be no other active bookings that day
+        if (newType == SessionType.LARGE) {
             return existingBookings.isEmpty();
         } else {
             // If we are booking something else, there must be no existing LARGE booking

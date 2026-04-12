@@ -19,7 +19,7 @@
     <description>Tattoo Scheduler Pet Project</description>
 
     <properties>
-        <!-- Java version for compiler and runtime compatibility -->
+        <!-- Java 25 for modern language features -->
         <java.version>25</java.version>
     </properties>
 
@@ -77,7 +77,7 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>1.6.3</version> <!-- check latest version -->
+            <version>1.6.3</version>
         </dependency>
         <!-- MapStruct annotation processor: generates mapper implementations during compilation -->
         <dependency>

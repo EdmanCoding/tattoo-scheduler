@@ -17,8 +17,7 @@ public class BookingDTOMapperTest {
     private final BookingDTOMapper bookingDTOMapper = Mappers.getMapper(BookingDTOMapper.class);
 
     @Test
-    public void toDomain_shouldMapRequestToDomain() {
-        // Arrange
+    void toDomain_shouldMapRequestToDomain() {
         CreateBookingRequest request = TestRequestFactory.request()
                 .ofType(SessionType.MEDIUM)
                 .at(DEFAULT_START_TIME)
@@ -26,9 +25,9 @@ public class BookingDTOMapperTest {
                 .withImage("image/test.png").build();
         Long userId = TEST_USER_ID;
         Long artistId = TEST_ARTIST_ID;
-        // Act
+
         Booking domain = bookingDTOMapper.toDomain(request, userId, artistId);
-        // Arrange
+
         assertThat(domain).isNotNull();
         assertThat(domain.getSessionType()).isEqualTo(request.sessionType());
         assertThat(domain.getStartTime()).isEqualTo(request.startTime());
@@ -36,20 +35,20 @@ public class BookingDTOMapperTest {
         assertThat(domain.getImagePath()).isEqualTo(request.imagePath());
         assertThat(domain.getUserId()).isEqualTo(userId);
         assertThat(domain.getArtistId()).isEqualTo(artistId);
-        // Fields that should be ignored:
+        // These fields are calculated by the service, not mapped from the request
         assertThat(domain.getEndTime()).isNull();
         assertThat(domain.getEndOfBufferTime()).isNull();
         assertThat(domain.getStatus()).isNull();
         assertThat(domain.getCreatedAt()).isNull();
         assertThat(domain.getUpdatedAt()).isNull();
     }
+
     @Test
-    public void toResponse_shouldMapDomainToResponse() {
-        // Arrange
+    void toResponse_shouldMapDomainToResponse() {
         Booking domain = TestData.createTestBookingDomain();
-        // Act
+
         BookingResponse response = bookingDTOMapper.toResponse(domain);
-        // Assert
+
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(domain.getId());
         assertThat(response.userId()).isEqualTo(domain.getUserId());

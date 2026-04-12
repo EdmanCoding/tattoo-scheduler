@@ -3,7 +3,6 @@ package com.tattoo.scheduler.util;
 import com.tattoo.scheduler.domain.Artist;
 import com.tattoo.scheduler.domain.Booking;
 import com.tattoo.scheduler.domain.User;
-import com.tattoo.scheduler.mapper.BookingMapper;
 import com.tattoo.scheduler.model.*;
 
 import java.time.LocalDate;
@@ -16,13 +15,12 @@ public class TestData {
     public static final LocalDateTime DEFAULT_END_OF_BUFFER_TIME = LocalDateTime.of(2026, 4, 15, 16, 0);
     public static final LocalDateTime DEFAULT_CREATED_TIME = LocalDateTime.of(2026, 3, 15, 12, 44);
     public static final LocalDateTime DEFAULT_DAY_END_TIME = LocalDateTime.of(2026, 4, 15, 20, 0);
-    public static final LocalDate DEFAULT_DATE = LocalDate.of(2026,4,15);
-    public static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.of(2000,2,22);
+    public static final LocalDate DEFAULT_DATE = LocalDate.of(2026, 4, 15);
+    public static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.of(2000, 2, 22);
 
     public static final Long TEST_USER_ID = 1L;
     public static final Long TEST_ARTIST_ID = 1L;
     public static final Long TEST_BOOKING_ID = 1L;
-    public static final Long TEST_NONEXISTING_USER_ID = 658L;
     public static final Long TEST_NONEXISTING_ARTIST_ID = 658L;
 
     public static ArtistEntity createTestArtistEntity() {
@@ -31,11 +29,13 @@ public class TestData {
                 .email("testMail@email.com")
                 .password("secret").build();
     }
+
     public static ArtistEntity createArtistEntityWithId(Long id) {
         ArtistEntity artist = createTestArtistEntity();
         artist.setId(id);
         return artist;
     }
+
     public static UserEntity createTestUserEntity1() {
         return UserEntity.builder()
                 .name("TestUser")
@@ -44,14 +44,7 @@ public class TestData {
                 .password("secret")
                 .birthDate(DEFAULT_BIRTH_DATE).build();
     }
-    public static UserEntity createTestUserEntity2() {
-        return UserEntity.builder()
-                .name("TestUser2")
-                .phoneNumber("765-4321")
-                .email("testMailUser2@email.com")
-                .password("secret")
-                .birthDate(DEFAULT_BIRTH_DATE).build();
-    }
+
     public static UserEntity createUserEntityWithId(Long id) {
         return UserEntity.builder()
                 .id(id)
@@ -61,9 +54,11 @@ public class TestData {
                 .password("secret")
                 .birthDate(DEFAULT_BIRTH_DATE).build();
     }
+
     public static BookingEntity createTestBookingEntity() {
-        return createTestBookingEntity( TEST_USER_ID, TEST_ARTIST_ID);
+        return createTestBookingEntity(TEST_USER_ID, TEST_ARTIST_ID);
     }
+
     public static BookingEntity createTestBookingEntity(Long userId, Long artistId) {
         return BookingEntity.builder()
                 .userEntity(createUserEntityWithId(userId))
@@ -77,6 +72,7 @@ public class TestData {
                 .imagePath("/images/test.png")
                 .createdAt(DEFAULT_CREATED_TIME).build();
     }
+
     public static BookingEntity createTestBookingEntity(UserEntity user, ArtistEntity artist,
                                                         SessionType type, LocalDateTime start) {
         return BookingEntity.builder()
@@ -91,32 +87,7 @@ public class TestData {
                 .createdAt(DEFAULT_CREATED_TIME)
                 .updatedAt(DEFAULT_CREATED_TIME).build();
     }
-    public static Booking createTestBookingDomain(Long userId, Long artistId,
-                                                  SessionType type, LocalDateTime start) {
-        return Booking.builder()
-                .userId(userId)
-                .artistId(artistId)
-                .sessionType(type)
-                .startTime(start)
-                .endTime(start.plusMinutes(type.getDurationMinutes()))
-                .endOfBufferTime(start.plusMinutes(type.getDurationMinutes())
-                        .plusMinutes(type.getBufferAfterMinutes()))
-                .status(BookingStatus.PENDING)
-                .build();
-    }
-    public static Booking createTestBookingDomain(UserEntity user, ArtistEntity artist,
-                                                  SessionType type, LocalDateTime start) {
-        return Booking.builder()
-                .userId(user.getId())
-                .artistId(artist.getId())
-                .sessionType(type)
-                .startTime(start)
-                .endTime(start.plusMinutes(type.getDurationMinutes()))
-                .endOfBufferTime(start.plusMinutes(type.getDurationMinutes())
-                        .plusMinutes(type.getBufferAfterMinutes()))
-                .status(BookingStatus.PENDING)
-                .build();
-    }
+
     public static Booking createTestBookingDomain() {
         return Booking.builder()
                 .id(99L)
@@ -132,6 +103,7 @@ public class TestData {
                 .createdAt(DEFAULT_CREATED_TIME)
                 .updatedAt(DEFAULT_CREATED_TIME).build();
     }
+
     public static Artist createTestArtistDomain() {
         return Artist.builder()
                 .id(TEST_ARTIST_ID)
@@ -140,6 +112,7 @@ public class TestData {
                 .password("secret")
                 .createdAt(DEFAULT_CREATED_TIME).build();
     }
+
     public static User createTestUserDomain() {
         return User.builder()
                 .id(TEST_USER_ID)

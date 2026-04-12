@@ -13,7 +13,8 @@ import java.util.List;
 @Entity
 @Table(name = "artists")
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,15 +30,13 @@ public class ArtistEntity {
     @Email
     private String email;
 
-    // TODO: Hash password with BCrypt before saving in production
     @NotBlank
     private String password;
 
-    @Column (updatable = false, nullable = false)
+    @Column(updatable = false, nullable = false)
     @CreatedDate
     private LocalDateTime createdAt;
 
-    // Just for navigation!
     @OneToMany(mappedBy = "artistEntity", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<BookingEntity> bookingEntities;
 }

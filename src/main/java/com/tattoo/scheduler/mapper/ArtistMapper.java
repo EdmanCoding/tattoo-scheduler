@@ -10,5 +10,6 @@ public interface ArtistMapper {
 
     @Mapping(target = "bookingEntities", ignore = true)
     ArtistEntity toEntity(Artist artist);
+
     Artist toDomain(ArtistEntity entity);
 }

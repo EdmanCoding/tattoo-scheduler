@@ -17,7 +17,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class NikitaBookingPolicyTest {
     private final NikitaBookingPolicy policy = new NikitaBookingPolicy();
-    // 10:00 on June 26, 2026
+
     private static final LocalDateTime BASE_DATE_TIME = LocalDateTime.of(2026, 6, 26, 10, 0);
 
     @ParameterizedTest(name = "daysOffset={0} → should be {1}")
@@ -29,9 +29,9 @@ public class NikitaBookingPolicyTest {
             "-30, false"    // month ago
     })
     void isDateAllowed_ShouldReturnCorrectResult(int daysOffset, boolean expected) {
-        LocalDate date = LocalDate.now().plusDays(daysOffset);  // Arrange
-        boolean result = policy.isDateAllowed(date);            // Act
-        assertThat(result).isEqualTo(expected);                 // Assert
+        LocalDate date = LocalDate.now().plusDays(daysOffset);  
+        boolean result = policy.isDateAllowed(date);
+        assertThat(result).isEqualTo(expected);
     }
     // working hours are 10:00 - 20:00
     @ParameterizedTest

@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
         @Index(name = "idx_booking_artist_time", columnList = "artist_id, start_time, end_time")
 })
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -56,10 +57,10 @@ public class BookingEntity {
     private String imagePath;
 
     @CreatedDate
-    @Column (updatable = false, nullable = false)
+    @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column (nullable = false)
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 }

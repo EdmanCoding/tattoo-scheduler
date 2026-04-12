@@ -26,13 +26,10 @@ public class BookingController {
             @RequestBody @Valid CreateBookingRequest request,
             @RequestParam(required = false) Long artistId) {
 
-        // 1. Map request to domain
         Booking booking = bookingDTOMapper.toDomain(request, currentUser.getId(), artistId);
 
-        // 2. Create booking (domain)
         Booking saved = bookingService.createBooking(booking);
 
-        // 3. Map to response
         return ResponseEntity.status(HttpStatus.CREATED).body(bookingDTOMapper.toResponse(saved));
     }
 }

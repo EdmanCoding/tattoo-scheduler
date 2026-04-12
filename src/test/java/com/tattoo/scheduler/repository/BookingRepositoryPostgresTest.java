@@ -22,16 +22,17 @@ import static com.tattoo.scheduler.util.TestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE) // No web layer for repository tests
-@ActiveProfiles("test-postgres")
-@Transactional      // Rolls back each test to keep the database clean
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@ActiveProfiles("test-postgre")
+@Transactional
 @Sql(scripts = "/test-data-postgre.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class BookingRepositoryPostgresTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
             .withDatabaseName("testdb")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withReuse(true);
     @DynamicPropertySource
     static void registerPgProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
@@ -53,7 +54,7 @@ public class BookingRepositoryPostgresTest {
 
     @BeforeEach
     void setUp() {
-        // Use the artist already inserted by test-data-h2.sql
+        // Use the artist already inserted by test-data-postgre.sql
         artist = artistRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Test artist not found"));
         // Insert user before each test
@@ -62,38 +63,30 @@ public class BookingRepositoryPostgresTest {
 
     @Test
     void shouldReturnBooking_whenOverlapWithDayStart() {
-        // Arrange: create a booking from 10:00 to 14:00 (buffer until 16:00)
         BookingEntity booking = TestData.createTestBookingEntity(user,
                 artist, SessionType.MEDIUM, DEFAULT_START_TIME);
         bookingRepository.save(booking);
 
-        // Act
         List<BookingEntity> result = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
 
-        //Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(booking.getId());
     }
     @Test
     void shouldReturnBooking_whenOverlapWithDayEnd() {
-        // Arrange: create a booking from 17:00 to 21:00 (buffer until 23:00)
         BookingEntity booking = TestData.createTestBookingEntity(user,
                 artist, SessionType.MEDIUM, DEFAULT_START_TIME.plusHours(7));
         bookingRepository.save(booking);
 
-        // Act
         List<BookingEntity> result = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
 
-        // Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(booking.getId());
     }
     @Test
     void shouldReturnBookings_whenExactlyAtBoundaries(){
-        // Arrange: two bookings -> 1. 10:00-11:00 (buffer until 12:00);
-        // 2. 18:00-19:00 (buffer until 20:00).
         BookingEntity bookingAtStart = TestData.createTestBookingEntity(user,
                 artist, SessionType.SMALL, DEFAULT_START_TIME);
         bookingRepository.save(bookingAtStart);
@@ -101,33 +94,27 @@ public class BookingRepositoryPostgresTest {
                 artist, SessionType.SMALL, DEFAULT_START_TIME.plusHours(8));
         bookingRepository.save(bookingAtEnd);
 
-        // Act
         List<BookingEntity> result = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
 
-        // Assert
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getId()).isEqualTo(bookingAtStart.getId());
         assertThat(result.get(1).getId()).isEqualTo(bookingAtEnd.getId());
     }
     @Test
     void shouldExcludeBooking_whenCancelled(){
-        // Arrange: cancelled booking 12:00-16:00
         BookingEntity cancelledBooking = TestData.createTestBookingEntity(user,
                 artist, SessionType.MEDIUM, DEFAULT_START_TIME.plusHours(2));
         cancelledBooking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(cancelledBooking);
 
-        // Act
         List<BookingEntity> result = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
 
-        // Arrange
         assertThat(result).isEmpty();
     }
     @Test
     void shouldReturnOnlyArtistBookings_whenMultipleArtistsExist(){
-        // Arrange
         ArtistEntity secondArtist = artistRepository.findById(2L)
                 .orElseThrow(() -> new RuntimeException("Test artist not found"));
         BookingEntity bookingOfFirstArtist = TestData.createTestBookingEntity(user,
@@ -137,7 +124,6 @@ public class BookingRepositoryPostgresTest {
                 secondArtist, SessionType.LARGE, DEFAULT_START_TIME);
         bookingRepository.save(bookingOfSecondArtist);
 
-        // Act
         List<BookingEntity> result = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
 
@@ -149,7 +135,6 @@ public class BookingRepositoryPostgresTest {
     }
     @Test
     void shouldReturnEmpty_whenNoOverlap(){
-        // Arrange
         BookingEntity bookingBefore = TestData.createTestBookingEntity(user,
                 artist, SessionType.SMALL_CONSULTATION, DEFAULT_START_TIME.minusHours(1));
         bookingRepository.save(bookingBefore);
@@ -157,11 +142,9 @@ public class BookingRepositoryPostgresTest {
                 artist, SessionType.SMALL, DEFAULT_START_TIME.plusHours(10));
         bookingRepository.save(bookingAfter);
 
-        // Act
         List<BookingEntity> result = bookingRepository.findOccupiedIntervals(
                 artist.getId(), dayStart, dayEnd, BookingStatus.CANCELLED);
 
-        // Arrange
         assertThat(result).isEmpty();
     }
 }

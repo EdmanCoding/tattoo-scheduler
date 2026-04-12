@@ -24,6 +24,6 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
                                               @Param("dayEnd") LocalDateTime dayEnd,
                                               @Param("excludedStatus") BookingStatus excludedStatus);
 
-    // Helper for calendar view
+    // Reserved for future calendar view
     List<BookingEntity> findByArtistEntityIdAndStatusNot(Long artistId, BookingStatus status);
 }

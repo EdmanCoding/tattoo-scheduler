@@ -5,7 +5,6 @@ import com.tattoo.scheduler.mapper.ArtistMapper;
 import com.tattoo.scheduler.model.ArtistEntity;
 import com.tattoo.scheduler.repository.ArtistRepository;
 import com.tattoo.scheduler.service.exception.ArtistNotFoundException;
-import com.tattoo.scheduler.service.exception.UserNotFoundException;
 import com.tattoo.scheduler.service.resolver.ArtistResolver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,6 +30,9 @@ public class DefaultArtistResolver implements ArtistResolver {
                 .orElseThrow(() -> new ArtistNotFoundException(artistId));
         return artistMapper.toDomain(entity);
     }
+
     @Override
-    public Long getDefaultArtistId() { return defaultArtistId; }
+    public Long getDefaultArtistId() {
+        return defaultArtistId;
+    }
 }

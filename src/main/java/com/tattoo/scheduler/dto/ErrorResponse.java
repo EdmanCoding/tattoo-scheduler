@@ -2,6 +2,7 @@ package com.tattoo.scheduler.dto;
 
 import lombok.Builder;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Builder

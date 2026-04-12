@@ -20,8 +20,8 @@ public class UserService {
     private final UserMapper userMapper;
 
     @Transactional
-    public User registerUser(RegisterRequest request){
-        if(userRepository.findByEmail(request.email()).isPresent()){
+    public User registerUser(RegisterRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new EmailAlreadyExistsException(request.email());
         }
 
@@ -38,11 +38,11 @@ public class UserService {
         return userMapper.toDomain(saved);
     }
 
-    @Transactional (readOnly = true)
-    public User authenticate(String email, String rawPassword){
+    @Transactional(readOnly = true)
+    public User authenticate(String email, String rawPassword) {
         UserEntity entity = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
-        if(!passwordEncoder.matches(rawPassword, entity.getPassword())){
+        if (!passwordEncoder.matches(rawPassword, entity.getPassword())) {
             throw new UsernameNotFoundException("Invalid credentials");
         }
         return userMapper.toDomain(entity);

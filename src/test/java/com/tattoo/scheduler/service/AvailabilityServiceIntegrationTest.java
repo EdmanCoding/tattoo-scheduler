@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@ActiveProfiles("test-postgres")
+@ActiveProfiles("test-postgre")
 @Transactional
 @Sql(scripts = "/test-data-postgre.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class AvailabilityServiceIntegrationTest {
@@ -39,7 +39,9 @@ public class AvailabilityServiceIntegrationTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
             .withDatabaseName("testdb")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withReuse(true);
+
 
     @DynamicPropertySource
     static void registerPgProperties(DynamicPropertyRegistry registry) {
@@ -65,7 +67,7 @@ public class AvailabilityServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Use the artist already inserted by test-data-h2.sql
+        // Use the artist already inserted by test-data-postgre.sql
         artist = artistRepository.findById(TEST_ARTIST_ID)
                 .orElseThrow(() -> new ArtistNotFoundException(TEST_ARTIST_ID));
         // Insert user before each test
@@ -74,7 +76,6 @@ public class AvailabilityServiceIntegrationTest {
 
     @Test
     void shouldReturnAvailableSlots_WhenMediumBookingExists(){
-        // Arrange
         // 10:00-14:00, buffer until 16:00
         BookingEntity mediumBooking = TestData.createTestBookingEntity(
                 user, artist, MEDIUM, dayStart);
@@ -86,43 +87,40 @@ public class AvailabilityServiceIntegrationTest {
                 dayStart.plusHours(8),  // 18:00
                 dayStart.plusHours(9)); // 19:00
 
-        // Act
         List<LocalDateTime> slots = availabilityService.getAvailableStartTimes(
                 date, SMALL_CONSULTATION, TEST_ARTIST_ID);
-        // Arrange
         assertThat(slots).containsExactlyElementsOf(expectedSlots);
     }
     @Test
     void shouldReturnAllSlots_WhenDayEmpty() {
-        // Arrange
         List<LocalDateTime> expectedSlots = List.of(
                 dayStart,               // 10:00
                 dayStart.plusHours(2),  // 12:00
                 dayStart.plusHours(4),  // 14:00
                 dayStart.plusHours(6),  // 16:00
                 dayStart.plusHours(8)); // 18:00
-        // Act
+
         List<LocalDateTime> slots = availabilityService.getAvailableStartTimes(
                 date, SMALL, TEST_ARTIST_ID);
-        // Arrange
+
         assertThat(slots).containsExactlyElementsOf(expectedSlots);
     }
     @Test
     void shouldReturnNoSlots_WhenLargeBookingExists(){
-        // Arrange
+
         BookingEntity existingBooking = TestData.createTestBookingEntity(
                 user, artist, LARGE, dayStart);
         bookingRepository.save(existingBooking);
         List<LocalDateTime> expectedSlots = List.of();
-        // Act
+
         List<LocalDateTime> slots = availabilityService.getAvailableStartTimes(
                 date, SMALL_CONSULTATION, TEST_ARTIST_ID);
-        // Arrange
+
         assertThat(slots).containsExactlyElementsOf(expectedSlots);
     }
     @Test
     void shouldReturnAvailableSlots_WhenMultipleBookingsExist(){
-        // Arrange: multiple bookings
+        // multiple bookings
         // SMALL 10-11, LARGE_CONSULTATION 14-15, SMALL_CONSULTATION 19:30-20:00
         BookingEntity existingBooking = TestData.createTestBookingEntity(
                 user, artist, SMALL, dayStart);
@@ -139,10 +137,10 @@ public class AvailabilityServiceIntegrationTest {
                 dayStart.plusHours(6),  // 16:00
                 dayStart.plusHours(7),  // 17:00
                 dayStart.plusHours(8)); // 18:00
-        // Act
+
         List<LocalDateTime> slots = availabilityService.getAvailableStartTimes(
                 date, SMALL_CONSULTATION, TEST_ARTIST_ID);
-        // Arrange
+
         assertThat(slots).containsExactlyElementsOf(expectedSlots);
     }
 }

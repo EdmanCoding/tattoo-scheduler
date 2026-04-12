@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@ActiveProfiles("test-postgres")
+@ActiveProfiles("test-postgre")
 @Transactional
 @Sql(scripts = "/test-data-postgre.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public class BookingServiceIntegrationTest {
@@ -41,7 +41,8 @@ public class BookingServiceIntegrationTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
             .withDatabaseName("testdb")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withReuse(true);
 
     @DynamicPropertySource
     static void registerPgProperties(DynamicPropertyRegistry registry) {
@@ -63,25 +64,24 @@ public class BookingServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Use the artist already inserted by test-data-h2.sql
+        // Use the artist already inserted by test-data-postgre.sql
         artist = artistRepository.findById(TEST_ARTIST_ID)
                 .orElseThrow(() -> new ArtistNotFoundException(TEST_ARTIST_ID));
-        // Use the user already inserted by test-data-h2.sql
+        // Use the user already inserted by test-data-postgre.sql
         user = userRepository.findById(TEST_USER_ID)
                 .orElseThrow(() -> new UserNotFoundException(TEST_USER_ID));
     }
 
     @Test
     void shouldReturnDomain_whenDayEmpty(){
-        // Arrange
         Booking request = Booking.builder()
                 .sessionType(MEDIUM)
                 .startTime(DEFAULT_START_TIME)
                 .userId(TEST_USER_ID)
                 .artistId(TEST_ARTIST_ID).build();
-        // Act
+
         Booking result = bookingService.createBooking(request);
-        // Assert
+
         assertThat(result).isNotNull();
         assertThat(result.getId()).isNotNull();
         assertThat(result.getCreatedAt()).isNotNull();
@@ -99,7 +99,6 @@ public class BookingServiceIntegrationTest {
     }
     @Test
     void shouldThrowException_whenConflictWithExisting(){
-        // Arrange
         // existing booking 10:00-14:00, buffer until 16:00
         BookingEntity mediumBooking = TestData.createTestBookingEntity(
                 user, artist, MEDIUM, DEFAULT_START_TIME);
@@ -111,27 +110,25 @@ public class BookingServiceIntegrationTest {
                 .startTime(DEFAULT_START_TIME.plusHours(5))
                 .userId(TEST_USER_ID)
                 .artistId(TEST_ARTIST_ID).build();
-        // Act and Assert
+
         assertThatThrownBy(()-> bookingService.createBooking(request))
                 .isInstanceOf(BookingConflictException.class)
                 .hasMessageContaining("Cannot book at");
     }
     @Test
     void shouldThrowException_whenArtistNotFound(){
-        // Arrange
         Booking request = Booking.builder()
                 .sessionType(MEDIUM)
                 .startTime(DEFAULT_START_TIME)
                 .userId(TEST_USER_ID)
                 .artistId(TEST_NONEXISTING_ARTIST_ID).build();
-        // Act and Assert
+
         assertThatThrownBy(()-> bookingService.createBooking(request))
                 .isInstanceOf(ArtistNotFoundException.class)
                 .hasMessage("Artist with id " + TEST_NONEXISTING_ARTIST_ID + " not found");
     }
     @Test
     void shouldThrowException_whenBookLargeWhileDayHasBooking(){
-        // Arrange
         // existing booking 19:30-20:00, buffer until 20:30
         BookingEntity mediumBooking = TestData.createTestBookingEntity(
                 user, artist, SMALL_CONSULTATION, DEFAULT_START_TIME.plusHours(9).plusMinutes(30));
@@ -143,7 +140,6 @@ public class BookingServiceIntegrationTest {
                 .userId(TEST_USER_ID)
                 .artistId(TEST_ARTIST_ID).build();
 
-        // Act and Assert
         assertThatThrownBy(()-> bookingService.createBooking(request))
                 .isInstanceOf(BookingConflictException.class)
                 .hasMessage("Cannot book at " + DEFAULT_START_TIME + " for artist "
@@ -151,15 +147,14 @@ public class BookingServiceIntegrationTest {
     }
     @Test
     void shouldReturnDomain_whenBookEmptyWhileDayFree(){
-        // Arrange
         Booking request = Booking.builder()
                 .sessionType(LARGE)
                 .startTime(DEFAULT_START_TIME)
                 .userId(TEST_USER_ID)
                 .artistId(TEST_ARTIST_ID).build();
-        // Act
+
         Booking result = bookingService.createBooking(request);
-        // Assert
+
         assertThat(result).isNotNull();
         assertThat(result.getId()).isNotNull();
         assertThat(result.getCreatedAt()).isNotNull();
@@ -177,14 +172,13 @@ public class BookingServiceIntegrationTest {
     }
     @Test
     void shouldThrowException_whenBookingOutsideWorkingHours(){
-        // Arrange
         Booking request = Booking.builder()
                 .sessionType(MEDIUM)
                 // Session ends at 21:00
                 .startTime(DEFAULT_START_TIME.plusHours(7))
                 .userId(TEST_USER_ID)
                 .artistId(TEST_ARTIST_ID).build();
-        // Act and Assert
+
         assertThatThrownBy(()-> bookingService.createBooking(request))
                 .isInstanceOf(BookingOutsideWorkingHoursException.class)
                 .hasMessage("Session starting at "

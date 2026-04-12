@@ -15,7 +15,8 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
-@Getter @Setter
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,7 +38,6 @@ public class UserEntity {
     @Past
     private LocalDate birthDate;
 
-    // TODO: Hash password with BCrypt before saving
     @NotBlank
     private String password;
 
@@ -45,7 +45,6 @@ public class UserEntity {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    // Just for navigation!
     @OneToMany(mappedBy = "userEntity", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<BookingEntity> bookingEntities;
 }

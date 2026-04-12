@@ -12,12 +12,12 @@ public class BookingMapperTest {
     private final BookingMapper mapper = Mappers.getMapper(BookingMapper.class);
 
     @Test
-    public void toDomain_shouldMapEntityToDomain() {
-        // Arrange
+    void toDomain_shouldMapEntityToDomain() {
+
         BookingEntity entity = TestData.createTestBookingEntity();
-        // Act
+
         Booking domain = mapper.toDomain(entity);
-        // Assert
+
         assertThat(domain).isNotNull();
         assertThat(domain.getId()).isEqualTo(entity.getId());
         assertThat(domain.getUserId()).isEqualTo(entity.getUserEntity().getId());
@@ -32,13 +32,14 @@ public class BookingMapperTest {
         assertThat(domain.getCreatedAt()).isEqualTo(entity.getCreatedAt());
         assertThat(domain.getUpdatedAt()).isEqualTo(entity.getUpdatedAt());
     }
+
     @Test
-    public void toEntity_shouldMapDomainToEntity() {
-        // Arrange
+    void toEntity_shouldMapDomainToEntity() {
+
         Booking domain = TestData.createTestBookingDomain();
-        // Act
+
         BookingEntity entity = mapper.toEntity(domain);
-        // Assert
+
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isEqualTo(domain.getId());
         assertThat(entity.getUserEntity()).isNull();

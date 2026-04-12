@@ -39,12 +39,13 @@ public class AuthControllerTest {
         LoginRequest request = new LoginRequest("testuser@example.com", "secret");
 
         mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").value("testuser@example.com"));
     }
+
     @Test
     void login_returns401_whenInvalidEmail() throws Exception {
         LoginRequest request = new LoginRequest("nonexistent@example.com", "secret");
@@ -54,6 +55,7 @@ public class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
     }
+
     @Test
     void login_returns401_whenInvalidPassword() throws Exception {
         LoginRequest request = new LoginRequest("testuser@example.com", "invalidPassword");
@@ -71,14 +73,15 @@ public class AuthControllerTest {
                 "qwerty12345", "8 800 555 35 35", DEFAULT_BIRTH_DATE);
 
         mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").value("vasya_huligan228@gmail.com"))
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.name").value("Vasya"));
     }
+
     @Test
     void register_returns409_whenEmailExists() throws Exception {
         RegisterRequest request = new RegisterRequest("Vasya", "testuser@example.com",
@@ -90,6 +93,7 @@ public class AuthControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Email already registered: testuser@example.com"));
     }
+
     @Test
     void register_returns201_whenAgeExactly18() throws Exception {
         RegisterRequest request = new RegisterRequest("Adult", "adult@example.com",
@@ -99,6 +103,7 @@ public class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
     }
+
     @Test
     void register_returns201_whenPasswordExactly6Chars() throws Exception {
         RegisterRequest request = new RegisterRequest("SixChar", "six@example.com",
@@ -121,6 +126,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("email: Email is required"));
     }
+
     @Test
     void login_returns400_whenEmailMalformed() throws Exception {
         LoginRequest request = new LoginRequest(".com@testuser", "secret");
@@ -131,6 +137,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("email: Invalid email format"));
     }
+
     @Test
     void login_returns400_whenPasswordMissing() throws Exception {
         LoginRequest request = new LoginRequest("testuser@example.com", null);
@@ -141,6 +148,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("password: Password is required"));
     }
+
     @Test
     void login_returns400_whenEmailMalformedAndPasswordMissing() throws Exception {
         LoginRequest request = new LoginRequest(".com@testuser", null);
@@ -168,6 +176,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("name: Name is required"));
     }
+
     @Test
     void register_returns400_whenEmailIsNull() throws Exception {
         RegisterRequest request = new RegisterRequest("Vasya", null,
@@ -179,6 +188,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("email: Email is required"));
     }
+
     @Test
     void register_returns400_whenPasswordIsNull() throws Exception {
         RegisterRequest request = new RegisterRequest("Vasya", "vasya_huligan228@gmail.com",
@@ -190,6 +200,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("password: Password is required"));
     }
+
     @Test
     void register_returns400_whenPhoneNumberIsEmpty() throws Exception {
         RegisterRequest request = new RegisterRequest("Vasya", "vasya_huligan228@gmail.com",
@@ -201,6 +212,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("phoneNumber: Phone number is required"));
     }
+
     @Test
     void register_returns400_whenBirthDateInFuture() throws Exception {
         RegisterRequest request = new RegisterRequest("Vasya", "vasya_huligan228@gmail.com",
@@ -215,6 +227,7 @@ public class AuthControllerTest {
                     assertThat(message).contains("birthDate: Birth date must be in the past");
                 });
     }
+
     @Test
     void register_returns400_whenBirthDateIsNull() throws Exception {
         RegisterRequest request = new RegisterRequest("Vasya", "vasya_huligan228@gmail.com",
@@ -226,6 +239,7 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("birthDate: Birth date is required"));
     }
+
     @Test
     void register_returns400_whenAllFieldsInvalid() throws Exception {
         RegisterRequest request = new RegisterRequest(null, "vasyagmail.com",

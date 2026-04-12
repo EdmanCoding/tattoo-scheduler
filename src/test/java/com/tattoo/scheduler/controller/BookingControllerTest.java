@@ -78,8 +78,8 @@ class BookingControllerTest {
                     "notes": "Test"
                 }
                 """;
-        Booking mappedBooking = new Booking(); // the object returned by the mapper
-        Booking savedBooking = new Booking();  // the object returned by the service
+        Booking mappedBooking = new Booking();
+        Booking savedBooking = new Booking();
         BookingResponse response = TestResponseFactory.response().withNotes("Test").build();
 
         when(bookingDTOMapper.toDomain(any(CreateBookingRequest.class), anyLong(), any()))

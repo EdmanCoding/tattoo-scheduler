@@ -10,5 +10,6 @@ public interface UserMapper {
 
     @Mapping(target = "bookingEntities", ignore = true)
     UserEntity toEntity(User user);
+
     User toDomain(UserEntity user);
 }

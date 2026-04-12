@@ -12,12 +12,11 @@ public class ArtistMapperTest {
     private final ArtistMapper mapper = Mappers.getMapper(ArtistMapper.class);
 
     @Test
-    public void toDomain_shouldMapEntityToDomain() {
-        // Arrange
+    void toDomain_shouldMapEntityToDomain() {
         ArtistEntity entity = TestData.createTestArtistEntity();
-        // Act
+
         Artist domain = mapper.toDomain(entity);
-        // Assert
+
         assertThat(domain).isNotNull();
         assertThat(domain.getId()).isEqualTo(entity.getId());
         assertThat(domain.getName()).isEqualTo(entity.getName());
@@ -25,13 +24,13 @@ public class ArtistMapperTest {
         assertThat(domain.getPassword()).isEqualTo(entity.getPassword());
         assertThat(domain.getCreatedAt()).isEqualTo(entity.getCreatedAt());
     }
+
     @Test
-    public void toEntity_shouldMapDomainToEntity() {
-        // Arrange
+    void toEntity_shouldMapDomainToEntity() {
         Artist domain = TestData.createTestArtistDomain();
-        // Act
+
         ArtistEntity entity = mapper.toEntity(domain);
-        // Assert
+
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isEqualTo(domain.getId());
         assertThat(entity.getName()).isEqualTo(domain.getName());

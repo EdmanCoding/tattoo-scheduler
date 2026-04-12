@@ -59,8 +59,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                        log.info("✅ User authenticated successfully: {}", userEmail);  // ← Will always show
-                        log.debug("🔍 Debug details for: {}", userEmail);  // ← Only shows with DEBUG level
                         log.debug("Successfully authenticated user: {}", userEmail);
 
                     } catch (UsernameNotFoundException e) {
@@ -77,9 +75,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 sendGenericUnauthorized(response);
             }
         }
-        // For all other cases (no header, wrong prefix, or validation succeeded) – continue
         filterChain.doFilter(request, response);
     }
+
     private void sendGenericUnauthorized(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");

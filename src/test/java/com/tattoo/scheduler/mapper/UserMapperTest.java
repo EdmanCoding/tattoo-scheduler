@@ -12,12 +12,12 @@ public class UserMapperTest {
     private final UserMapper mapper = Mappers.getMapper(UserMapper.class);
 
     @Test
-    public void toDomain_shouldMapEntityToDomain() {
-        // Arrange
+    void toDomain_shouldMapEntityToDomain() {
+
         UserEntity entity = TestData.createUserEntityWithId(1L);
-        // Act
+
         User domain = mapper.toDomain(entity);
-        // Assert
+
         assertThat(domain).isNotNull();
         assertThat(domain.getId()).isEqualTo(entity.getId());
         assertThat(domain.getName()).isEqualTo(entity.getName());
@@ -27,13 +27,14 @@ public class UserMapperTest {
         assertThat(domain.getBirthDate()).isEqualTo(entity.getBirthDate());
         assertThat(domain.getCreatedAt()).isEqualTo(entity.getCreatedAt());
     }
+
     @Test
-    public void toEntity_shouldMapDomainToEntity() {
-        // Arrange
+    void toEntity_shouldMapDomainToEntity() {
+
         User domain = TestData.createTestUserDomain();
-        // Act
+
         UserEntity entity = mapper.toEntity(domain);
-        // Assert
+
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isEqualTo(domain.getId());
         assertThat(entity.getName()).isEqualTo(domain.getName());
