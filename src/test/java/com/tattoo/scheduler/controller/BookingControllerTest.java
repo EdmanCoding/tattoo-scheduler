@@ -74,7 +74,7 @@ class BookingControllerTest {
         String requestBody = """
                 {
                     "sessionType": "MEDIUM",
-                    "startTime": "2026-04-15T10:00",
+                    "startTime": "2026-06-15T10:00",
                     "notes": "Test"
                 }
                 """;
@@ -93,7 +93,7 @@ class BookingControllerTest {
                         .content(requestBody))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.sessionType").value("MEDIUM"))
-                .andExpect(jsonPath("$.startTime").value("2026-04-15T10:00:00"))
+                .andExpect(jsonPath("$.startTime").value("2026-06-15T10:00:00"))
                 .andExpect(jsonPath("$.notes").value("Test"))
                 .andExpect(jsonPath("$.userId").value(TEST_USER_ID))
                 .andExpect(jsonPath("$.artistId").value(TEST_ARTIST_ID))
@@ -180,7 +180,7 @@ class BookingControllerTest {
         String requestBody = """
             {
                 "sessionType": "MEDIUM",
-                "startTime": "2026-04-15T10:00"
+                "startTime": "2026-06-15T10:00"
             }
             """;
         Booking mappedBooking = new Booking();
@@ -194,7 +194,7 @@ class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Cannot book at 2026-04-15T10:00 " +
+                .andExpect(jsonPath("$.message").value("Cannot book at 2026-06-15T10:00 " +
                         "for artist 1 due to conflict with existing booking"));
     }
     @Test

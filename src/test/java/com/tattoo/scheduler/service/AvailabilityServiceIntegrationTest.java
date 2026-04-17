@@ -61,7 +61,7 @@ public class AvailabilityServiceIntegrationTest {
     private ArtistEntity artist;
     private UserEntity user;
 
-    // working hours -> 10:00 - 20:00; default date -> 15.04.2026
+    // working hours -> 10:00 - 20:00; default date -> 15.06.2026
     private final LocalDateTime dayStart = DEFAULT_START_TIME;
     private final LocalDate date = DEFAULT_DATE;
 

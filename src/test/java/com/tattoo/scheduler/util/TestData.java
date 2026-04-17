@@ -10,12 +10,12 @@ import java.time.LocalDateTime;
 
 public class TestData {
     // === Constants ===
-    public static final LocalDateTime DEFAULT_START_TIME = LocalDateTime.of(2026, 4, 15, 10, 0);
-    public static final LocalDateTime DEFAULT_END_TIME = LocalDateTime.of(2026, 4, 15, 14, 0);
-    public static final LocalDateTime DEFAULT_END_OF_BUFFER_TIME = LocalDateTime.of(2026, 4, 15, 16, 0);
+    public static final LocalDateTime DEFAULT_START_TIME = LocalDateTime.of(2026, 6, 15, 10, 0);
+    public static final LocalDateTime DEFAULT_END_TIME = LocalDateTime.of(2026, 6, 15, 14, 0);
+    public static final LocalDateTime DEFAULT_END_OF_BUFFER_TIME = LocalDateTime.of(2026, 6, 15, 16, 0);
     public static final LocalDateTime DEFAULT_CREATED_TIME = LocalDateTime.of(2026, 3, 15, 12, 44);
-    public static final LocalDateTime DEFAULT_DAY_END_TIME = LocalDateTime.of(2026, 4, 15, 20, 0);
-    public static final LocalDate DEFAULT_DATE = LocalDate.of(2026, 4, 15);
+    public static final LocalDateTime DEFAULT_DAY_END_TIME = LocalDateTime.of(2026, 6, 15, 20, 0);
+    public static final LocalDate DEFAULT_DATE = LocalDate.of(2026, 6, 15);
     public static final LocalDate DEFAULT_BIRTH_DATE = LocalDate.of(2000, 2, 22);
 
     public static final Long TEST_USER_ID = 1L;

@@ -112,3 +112,44 @@ docker-compose up -d
 - Implemented and analyzed common OOP/design patterns in the context of the project, 
 including Strategy, Template Method, Factory, and Facade. 
 - Working with Bash, curl, jq, and Docker for local development and testing
+
+## Future Improvements
+
+### PostgreSQL Range Types and Overlap Constraints
+
+Currently, booking availability is calculated using separate `startTime` and `endOfBufferTime` fields with application-level overlap checks.
+
+A potential improvement is to leverage **PostgreSQL range types** (e.g., `tstzrange`) to represent booking intervals as a single value.
+
+This allows using built-in range operators such as `&&` (overlaps), simplifying query logic and reducing the risk of edge-case errors.
+
+**Example:**
+
+```sql
+SELECT *
+FROM bookings
+WHERE period && tstzrange(:start, :end);
+```
+Additionally, a **GiST index** can be applied to optimize overlap queries:
+
+```sql
+CREATE INDEX idx_booking_period ON bookings USING GiST (period);
+```
+**Enforcing Non-Overlapping Bookings**
+- To guarantee that bookings for the same artist do not overlap, a database-level constraint can be introduced using an exclusion constraint:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE bookings ADD CONSTRAINT no_overlap_booking
+EXCLUDE USING gist (
+    artist_id WITH =,
+    tstzrange(start_time, end_of_buffer_time) WITH &&
+);
+```
+This ensures that no two bookings for the same artist can have overlapping time intervals.
+**Benefits:**
+- ✅ Simplifies overlap detection logic
+- ✅ Eliminates race conditions
+- ✅ Enforces business rules at the database level
+- ✅ Improves data integrity and reliability
