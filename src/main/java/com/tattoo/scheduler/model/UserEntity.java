@@ -29,6 +29,7 @@ public class UserEntity {
 
     @NotBlank
     @Email
+    @Column(unique = true)
     private String email;
 
     @NotBlank
